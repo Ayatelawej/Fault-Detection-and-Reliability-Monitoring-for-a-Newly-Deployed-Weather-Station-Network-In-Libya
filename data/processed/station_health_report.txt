@@ -7,7 +7,7 @@ WEIGHTED DEFINITION
 health_total = 30*availability + 20*sensor_completeness + 25*fault_evidence_burden + 15*reference_consistency + 10*stability
 All five components are normalized to 0–1 before their fixed design weights are applied.
 Fault burden is a trailing, exponentially recency-weighted (24-hour half-life) rate of causally reconstructed physical-limit, stuck, or deviation evidence. It does not use reviewed episode labels. Stability counts only full/partial communication failures and hard physical/stuck evidence as recurring operational events, so isolated contextual deviations do not become a sequence of artificial event starts.
-Reference consistency uses exact-hour external reference residuals, prior-only residual history, and a causal fleet-relative pressure-persistence check. Completed Layer 2 intervals are not score inputs; where supplied, they only select a retrospective sanity-check plot.
+Reference consistency uses exact-hour external reference residuals, prior-only residual history, and a causal fleet-relative pressure-persistence check. Completed calibration-corroboration intervals are not score inputs; where supplied, they only select a retrospective sanity-check plot.
 Spatial neighbour availability is not an input to this score, so stations without peers receive no penalty.
 Active outages apply a fixed causal duration multiplier to all five normalized components before weighting: exp(-d/24) for a full outage and exp(-d/72) for a partial outage, where d is the consecutive active duration in completed hours. These fixed 24-hour and 72-hour decay constants are engineering design choices, not fitted or tuned parameters. The multiplier is 1 for a transmitting station, preserves the weighted-component sum, and lets a newly dropped station remain distinguishable from a prolonged outage.
 For a partial outage, d is the consecutive period in which the station has remained partially degraded; the separate sensor-completeness component and absent-group fields retain the group-level severity evidence.
@@ -205,7 +205,7 @@ station_id  health_total_mean_hard_zero  hard_zero_rank  health_total_mean_progr
 stable: INUQAT8
 confirmed_offset: IBIRAL3
 heavy_outage: IJANZO4
-A confirmed-offset case is selected from Layer 2 only for the visual sanity check; its reviewed interval does not change the score.
+A confirmed-offset case is selected from calibration corroboration only for the visual sanity check; its reviewed interval does not change the score.
 
 8. COMPONENT CORRELATION
                               health_availability  health_sensor_completeness  health_fault_burden  health_reference_consistency  health_stability

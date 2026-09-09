@@ -21,7 +21,10 @@ def select_baseline(
     station_id: str,
     channel: str,
     min_present_hours: int = COVERAGE_FLOOR_HOURS,
+    frozen_baseline: dict[str, object] | None = None,
 ) -> dict[str, object]:
+    if frozen_baseline is not None:
+        return frozen_baseline
     station_values = frame.loc[frame["station_id"].eq(station_id), channel].dropna()
     n_present = int(station_values.size)
 

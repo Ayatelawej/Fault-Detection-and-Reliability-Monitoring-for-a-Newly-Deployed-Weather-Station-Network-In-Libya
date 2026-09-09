@@ -1,0 +1,241 @@
+horizon_h,scope,drop_threshold_points,method,actual_class,predicted_class,count
+48,transmitting_origin,5,persistence,No drop,No drop,20403
+48,transmitting_origin,5,persistence,No drop,Drop,0
+48,transmitting_origin,5,persistence,Drop,No drop,8305
+48,transmitting_origin,5,persistence,Drop,Drop,0
+48,transmitting_origin,5,recent_trend_24h,No drop,No drop,13459
+48,transmitting_origin,5,recent_trend_24h,No drop,Drop,6944
+48,transmitting_origin,5,recent_trend_24h,Drop,No drop,6326
+48,transmitting_origin,5,recent_trend_24h,Drop,Drop,1979
+48,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,17309
+48,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,3094
+48,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,7009
+48,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1296
+48,transmitting_origin,5,selected_residual_forecast,No drop,No drop,14599
+48,transmitting_origin,5,selected_residual_forecast,No drop,Drop,5804
+48,transmitting_origin,5,selected_residual_forecast,Drop,No drop,3575
+48,transmitting_origin,5,selected_residual_forecast,Drop,Drop,4730
+48,transmitting_origin,5,direct_classifier,No drop,No drop,3908
+48,transmitting_origin,5,direct_classifier,No drop,Drop,16495
+48,transmitting_origin,5,direct_classifier,Drop,No drop,573
+48,transmitting_origin,5,direct_classifier,Drop,Drop,7732
+48,transmitting_origin,10,persistence,No drop,No drop,24081
+48,transmitting_origin,10,persistence,No drop,Drop,0
+48,transmitting_origin,10,persistence,Drop,No drop,4627
+48,transmitting_origin,10,persistence,Drop,Drop,0
+48,transmitting_origin,10,recent_trend_24h,No drop,No drop,18094
+48,transmitting_origin,10,recent_trend_24h,No drop,Drop,5987
+48,transmitting_origin,10,recent_trend_24h,Drop,No drop,3767
+48,transmitting_origin,10,recent_trend_24h,Drop,Drop,860
+48,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,21222
+48,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2859
+48,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,3847
+48,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,780
+48,transmitting_origin,10,selected_residual_forecast,No drop,No drop,22648
+48,transmitting_origin,10,selected_residual_forecast,No drop,Drop,1433
+48,transmitting_origin,10,selected_residual_forecast,Drop,No drop,3526
+48,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1101
+48,transmitting_origin,10,direct_classifier,No drop,No drop,8628
+48,transmitting_origin,10,direct_classifier,No drop,Drop,15453
+48,transmitting_origin,10,direct_classifier,Drop,No drop,887
+48,transmitting_origin,10,direct_classifier,Drop,Drop,3740
+72,transmitting_origin,5,persistence,No drop,No drop,20118
+72,transmitting_origin,5,persistence,No drop,Drop,0
+72,transmitting_origin,5,persistence,Drop,No drop,8460
+72,transmitting_origin,5,persistence,Drop,Drop,0
+72,transmitting_origin,5,recent_trend_24h,No drop,No drop,12599
+72,transmitting_origin,5,recent_trend_24h,No drop,Drop,7519
+72,transmitting_origin,5,recent_trend_24h,Drop,No drop,6317
+72,transmitting_origin,5,recent_trend_24h,Drop,Drop,2143
+72,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,17075
+72,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,3043
+72,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,7191
+72,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1269
+72,transmitting_origin,5,selected_residual_forecast,No drop,No drop,13541
+72,transmitting_origin,5,selected_residual_forecast,No drop,Drop,6577
+72,transmitting_origin,5,selected_residual_forecast,Drop,No drop,2934
+72,transmitting_origin,5,selected_residual_forecast,Drop,Drop,5526
+72,transmitting_origin,5,direct_classifier,No drop,No drop,3210
+72,transmitting_origin,5,direct_classifier,No drop,Drop,16908
+72,transmitting_origin,5,direct_classifier,Drop,No drop,415
+72,transmitting_origin,5,direct_classifier,Drop,Drop,8045
+72,transmitting_origin,10,persistence,No drop,No drop,23733
+72,transmitting_origin,10,persistence,No drop,Drop,0
+72,transmitting_origin,10,persistence,Drop,No drop,4845
+72,transmitting_origin,10,persistence,Drop,Drop,0
+72,transmitting_origin,10,recent_trend_24h,No drop,No drop,16674
+72,transmitting_origin,10,recent_trend_24h,No drop,Drop,7059
+72,transmitting_origin,10,recent_trend_24h,Drop,No drop,3854
+72,transmitting_origin,10,recent_trend_24h,Drop,Drop,991
+72,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,20929
+72,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2804
+72,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,4082
+72,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,763
+72,transmitting_origin,10,selected_residual_forecast,No drop,No drop,21369
+72,transmitting_origin,10,selected_residual_forecast,No drop,Drop,2364
+72,transmitting_origin,10,selected_residual_forecast,Drop,No drop,3439
+72,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1406
+72,transmitting_origin,10,direct_classifier,No drop,No drop,10024
+72,transmitting_origin,10,direct_classifier,No drop,Drop,13709
+72,transmitting_origin,10,direct_classifier,Drop,No drop,1131
+72,transmitting_origin,10,direct_classifier,Drop,Drop,3714
+96,transmitting_origin,5,persistence,No drop,No drop,19772
+96,transmitting_origin,5,persistence,No drop,Drop,0
+96,transmitting_origin,5,persistence,Drop,No drop,8735
+96,transmitting_origin,5,persistence,Drop,Drop,0
+96,transmitting_origin,5,recent_trend_24h,No drop,No drop,11953
+96,transmitting_origin,5,recent_trend_24h,No drop,Drop,7819
+96,transmitting_origin,5,recent_trend_24h,Drop,No drop,6425
+96,transmitting_origin,5,recent_trend_24h,Drop,Drop,2310
+96,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,16774
+96,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,2998
+96,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,7520
+96,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1215
+96,transmitting_origin,5,selected_residual_forecast,No drop,No drop,13842
+96,transmitting_origin,5,selected_residual_forecast,No drop,Drop,5930
+96,transmitting_origin,5,selected_residual_forecast,Drop,No drop,3250
+96,transmitting_origin,5,selected_residual_forecast,Drop,Drop,5485
+96,transmitting_origin,5,direct_classifier,No drop,No drop,8239
+96,transmitting_origin,5,direct_classifier,No drop,Drop,11533
+96,transmitting_origin,5,direct_classifier,Drop,No drop,1644
+96,transmitting_origin,5,direct_classifier,Drop,Drop,7091
+96,transmitting_origin,10,persistence,No drop,No drop,23647
+96,transmitting_origin,10,persistence,No drop,Drop,0
+96,transmitting_origin,10,persistence,Drop,No drop,4860
+96,transmitting_origin,10,persistence,Drop,Drop,0
+96,transmitting_origin,10,recent_trend_24h,No drop,No drop,15880
+96,transmitting_origin,10,recent_trend_24h,No drop,Drop,7767
+96,transmitting_origin,10,recent_trend_24h,Drop,No drop,3848
+96,transmitting_origin,10,recent_trend_24h,Drop,Drop,1012
+96,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,20817
+96,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2830
+96,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,4194
+96,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,666
+96,transmitting_origin,10,selected_residual_forecast,No drop,No drop,21362
+96,transmitting_origin,10,selected_residual_forecast,No drop,Drop,2285
+96,transmitting_origin,10,selected_residual_forecast,Drop,No drop,3456
+96,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1404
+96,transmitting_origin,10,direct_classifier,No drop,No drop,9650
+96,transmitting_origin,10,direct_classifier,No drop,Drop,13997
+96,transmitting_origin,10,direct_classifier,Drop,No drop,934
+96,transmitting_origin,10,direct_classifier,Drop,Drop,3926
+120,transmitting_origin,5,persistence,No drop,No drop,19414
+120,transmitting_origin,5,persistence,No drop,Drop,0
+120,transmitting_origin,5,persistence,Drop,No drop,9011
+120,transmitting_origin,5,persistence,Drop,Drop,0
+120,transmitting_origin,5,recent_trend_24h,No drop,No drop,11467
+120,transmitting_origin,5,recent_trend_24h,No drop,Drop,7947
+120,transmitting_origin,5,recent_trend_24h,Drop,No drop,6409
+120,transmitting_origin,5,recent_trend_24h,Drop,Drop,2602
+120,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,16489
+120,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,2925
+120,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,7804
+120,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1207
+120,transmitting_origin,5,selected_residual_forecast,No drop,No drop,14312
+120,transmitting_origin,5,selected_residual_forecast,No drop,Drop,5102
+120,transmitting_origin,5,selected_residual_forecast,Drop,No drop,3758
+120,transmitting_origin,5,selected_residual_forecast,Drop,Drop,5253
+120,transmitting_origin,5,direct_classifier,No drop,No drop,5314
+120,transmitting_origin,5,direct_classifier,No drop,Drop,14100
+120,transmitting_origin,5,direct_classifier,Drop,No drop,759
+120,transmitting_origin,5,direct_classifier,Drop,Drop,8252
+120,transmitting_origin,10,persistence,No drop,No drop,23295
+120,transmitting_origin,10,persistence,No drop,Drop,0
+120,transmitting_origin,10,persistence,Drop,No drop,5130
+120,transmitting_origin,10,persistence,Drop,Drop,0
+120,transmitting_origin,10,recent_trend_24h,No drop,No drop,15157
+120,transmitting_origin,10,recent_trend_24h,No drop,Drop,8138
+120,transmitting_origin,10,recent_trend_24h,Drop,No drop,3837
+120,transmitting_origin,10,recent_trend_24h,Drop,Drop,1293
+120,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,20472
+120,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2823
+120,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,4509
+120,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,621
+120,transmitting_origin,10,selected_residual_forecast,No drop,No drop,21095
+120,transmitting_origin,10,selected_residual_forecast,No drop,Drop,2200
+120,transmitting_origin,10,selected_residual_forecast,Drop,No drop,3718
+120,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1412
+120,transmitting_origin,10,direct_classifier,No drop,No drop,12070
+120,transmitting_origin,10,direct_classifier,No drop,Drop,11225
+120,transmitting_origin,10,direct_classifier,Drop,No drop,1387
+120,transmitting_origin,10,direct_classifier,Drop,Drop,3743
+144,transmitting_origin,5,persistence,No drop,No drop,19292
+144,transmitting_origin,5,persistence,No drop,Drop,0
+144,transmitting_origin,5,persistence,Drop,No drop,9063
+144,transmitting_origin,5,persistence,Drop,Drop,0
+144,transmitting_origin,5,recent_trend_24h,No drop,No drop,11288
+144,transmitting_origin,5,recent_trend_24h,No drop,Drop,8004
+144,transmitting_origin,5,recent_trend_24h,Drop,No drop,6442
+144,transmitting_origin,5,recent_trend_24h,Drop,Drop,2621
+144,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,16454
+144,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,2838
+144,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,7851
+144,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1212
+144,transmitting_origin,5,selected_residual_forecast,No drop,No drop,14289
+144,transmitting_origin,5,selected_residual_forecast,No drop,Drop,5003
+144,transmitting_origin,5,selected_residual_forecast,Drop,No drop,4348
+144,transmitting_origin,5,selected_residual_forecast,Drop,Drop,4715
+144,transmitting_origin,5,direct_classifier,No drop,No drop,6086
+144,transmitting_origin,5,direct_classifier,No drop,Drop,13206
+144,transmitting_origin,5,direct_classifier,Drop,No drop,932
+144,transmitting_origin,5,direct_classifier,Drop,Drop,8131
+144,transmitting_origin,10,persistence,No drop,No drop,23115
+144,transmitting_origin,10,persistence,No drop,Drop,0
+144,transmitting_origin,10,persistence,Drop,No drop,5240
+144,transmitting_origin,10,persistence,Drop,Drop,0
+144,transmitting_origin,10,recent_trend_24h,No drop,No drop,14712
+144,transmitting_origin,10,recent_trend_24h,No drop,Drop,8403
+144,transmitting_origin,10,recent_trend_24h,Drop,No drop,3974
+144,transmitting_origin,10,recent_trend_24h,Drop,Drop,1266
+144,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,20355
+144,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2760
+144,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,4599
+144,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,641
+144,transmitting_origin,10,selected_residual_forecast,No drop,No drop,20528
+144,transmitting_origin,10,selected_residual_forecast,No drop,Drop,2587
+144,transmitting_origin,10,selected_residual_forecast,Drop,No drop,4038
+144,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1202
+144,transmitting_origin,10,direct_classifier,No drop,No drop,8179
+144,transmitting_origin,10,direct_classifier,No drop,Drop,14936
+144,transmitting_origin,10,direct_classifier,Drop,No drop,696
+144,transmitting_origin,10,direct_classifier,Drop,Drop,4544
+168,transmitting_origin,5,persistence,No drop,No drop,18904
+168,transmitting_origin,5,persistence,No drop,Drop,0
+168,transmitting_origin,5,persistence,Drop,No drop,9360
+168,transmitting_origin,5,persistence,Drop,Drop,0
+168,transmitting_origin,5,recent_trend_24h,No drop,No drop,10921
+168,transmitting_origin,5,recent_trend_24h,No drop,Drop,7983
+168,transmitting_origin,5,recent_trend_24h,Drop,No drop,6725
+168,transmitting_origin,5,recent_trend_24h,Drop,Drop,2635
+168,transmitting_origin,5,no_new_incident_roll_forward,No drop,No drop,16228
+168,transmitting_origin,5,no_new_incident_roll_forward,No drop,Drop,2676
+168,transmitting_origin,5,no_new_incident_roll_forward,Drop,No drop,8092
+168,transmitting_origin,5,no_new_incident_roll_forward,Drop,Drop,1268
+168,transmitting_origin,5,selected_residual_forecast,No drop,No drop,13498
+168,transmitting_origin,5,selected_residual_forecast,No drop,Drop,5406
+168,transmitting_origin,5,selected_residual_forecast,Drop,No drop,3752
+168,transmitting_origin,5,selected_residual_forecast,Drop,Drop,5608
+168,transmitting_origin,5,direct_classifier,No drop,No drop,2956
+168,transmitting_origin,5,direct_classifier,No drop,Drop,15948
+168,transmitting_origin,5,direct_classifier,Drop,No drop,442
+168,transmitting_origin,5,direct_classifier,Drop,Drop,8918
+168,transmitting_origin,10,persistence,No drop,No drop,22730
+168,transmitting_origin,10,persistence,No drop,Drop,0
+168,transmitting_origin,10,persistence,Drop,No drop,5534
+168,transmitting_origin,10,persistence,Drop,Drop,0
+168,transmitting_origin,10,recent_trend_24h,No drop,No drop,14361
+168,transmitting_origin,10,recent_trend_24h,No drop,Drop,8369
+168,transmitting_origin,10,recent_trend_24h,Drop,No drop,4112
+168,transmitting_origin,10,recent_trend_24h,Drop,Drop,1422
+168,transmitting_origin,10,no_new_incident_roll_forward,No drop,No drop,20095
+168,transmitting_origin,10,no_new_incident_roll_forward,No drop,Drop,2635
+168,transmitting_origin,10,no_new_incident_roll_forward,Drop,No drop,4840
+168,transmitting_origin,10,no_new_incident_roll_forward,Drop,Drop,694
+168,transmitting_origin,10,selected_residual_forecast,No drop,No drop,20033
+168,transmitting_origin,10,selected_residual_forecast,No drop,Drop,2697
+168,transmitting_origin,10,selected_residual_forecast,Drop,No drop,3973
+168,transmitting_origin,10,selected_residual_forecast,Drop,Drop,1561
+168,transmitting_origin,10,direct_classifier,No drop,No drop,5091
+168,transmitting_origin,10,direct_classifier,No drop,Drop,17639
+168,transmitting_origin,10,direct_classifier,Drop,No drop,399
+168,transmitting_origin,10,direct_classifier,Drop,Drop,5135

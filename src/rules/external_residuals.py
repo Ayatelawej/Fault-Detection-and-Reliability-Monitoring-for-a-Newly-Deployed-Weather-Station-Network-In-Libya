@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config.paths import FIVE_MINUTE_INPUT_DIR, MERGED_DATASET_PATH
+from src.config.paths import MERGED_DATASET_PATH
 from src.rules.config import (
     EXTERNAL_BASELINE_MIN_HOURS,
     EXTERNAL_BASELINE_WINDOW_HOURS,
@@ -21,7 +21,7 @@ from src.rules.config import (
     EXTERNAL_SOLAR_MEAN_MIN_SLOTS,
     EXTERNAL_TIME_LAG_HOURS,
 )
-FIVE_MIN_DIR = FIVE_MINUTE_INPUT_DIR
+from src.rules.stuck_confirmation import FIVE_MIN_DIR
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_DIR = PROJECT_ROOT / EXTERNAL_CACHE_DIR

@@ -37,3 +37,22 @@ def sensor_group_for_channel(channel: str) -> str:
 
     prefix = max(matches, key=len)
     return SENSOR_GROUP_PREFIXES[prefix]
+
+
+METADATA_NUMERIC_COLUMNS = {
+    "n_raw_records",
+    "latitude",
+    "longitude",
+    "qc_status",
+    "epoch",
+    "data_present",
+    "elevation",
+}
+
+
+def numeric_channels(frame: pd.DataFrame) -> list[str]:
+    return [
+        column
+        for column in frame.select_dtypes(include=[np.number]).columns
+        if column not in METADATA_NUMERIC_COLUMNS
+    ]

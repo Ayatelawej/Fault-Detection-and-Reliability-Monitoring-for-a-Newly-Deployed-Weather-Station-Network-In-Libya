@@ -22,30 +22,31 @@ from src.model.hourly_baseline import (
     load_hourly_tensor,
     random_split_indices,
 )
-from src.model.hourly_detection import MASK_MODE_PER_FEATURE
+from src.model.hourly_detection import MASK_MODE_PER_HOUR
 
 
 DEVELOPMENT_TENSOR_PATH = (
-    PROJECT_ROOT / "data" / "hourly_detection" / "hourly_detection_short_v2mask.npz"
+    PROJECT_ROOT / "data" / "hourly_detection" / "one_hour_final" / "hourly_detection_01h.npz"
 )
 DEVELOPMENT_MODEL_PATH = (
     PROJECT_ROOT
     / "data"
     / "hourly_detection"
+    / "one_hour_final"
     / "models"
-    / "v2mask_rerun"
-    / "baseline_random_weight_2.0.joblib"
+    / "evidence_fusion"
+    / "selected_ef_hgb_random_01h.joblib"
 )
 JULY_LEDGER_PATH = (
     PROJECT_ROOT
     / "data"
     / "eval"
-    / "july_2026_scoring"
-    / "july_binary_predictions.parquet"
+    / "one_hour_candidate"
+    / "july_ef_hgb_binary_predictions.parquet"
 )
-CLASS_DISTRIBUTION_PATH = FIGURES_DIR / "selected_hgb_class_distribution.png"
-CONFUSION_MATRIX_PATH = FIGURES_DIR / "selected_hgb_confusion_matrices.png"
-ROC_PR_PATH = FIGURES_DIR / "selected_hgb_roc_pr_curves.png"
+CLASS_DISTRIBUTION_PATH = FIGURES_DIR / "selected_ef_hgb_class_distribution.png"
+CONFUSION_MATRIX_PATH = FIGURES_DIR / "selected_ef_hgb_confusion_matrices.png"
+ROC_PR_PATH = FIGURES_DIR / "selected_ef_hgb_roc_pr_curves.png"
 
 
 @dataclass(frozen=True)
@@ -66,13 +67,13 @@ def require_july_evaluation_inputs() -> None:
     _require_paths(
         {
             "development tensor": DEVELOPMENT_TENSOR_PATH,
-            "selected HGB model": DEVELOPMENT_MODEL_PATH,
+            "selected EF-HGB model": DEVELOPMENT_MODEL_PATH,
             "July prediction ledger": JULY_LEDGER_PATH,
         }
     )
 
 
-def load_selected_hgb_evaluations(
+def load_selected_detector_evaluations(
     tensor_path: Path = DEVELOPMENT_TENSOR_PATH,
     model_path: Path = DEVELOPMENT_MODEL_PATH,
     july_ledger_path: Path = JULY_LEDGER_PATH,
@@ -80,22 +81,23 @@ def load_selected_hgb_evaluations(
     _require_paths(
         {
             "development tensor": tensor_path,
-            "selected HGB model": model_path,
+            "selected EF-HGB model": model_path,
             "July prediction ledger": july_ledger_path,
         }
     )
     examples, _ = filter_eligible_examples(load_hourly_tensor(tensor_path))
-    values, _, _ = flatten_hourly_features(examples, mask_mode=MASK_MODE_PER_FEATURE)
+    values, _, _ = flatten_hourly_features(examples, mask_mode=MASK_MODE_PER_HOUR)
     truth = np.asarray(examples["y_binary"], dtype=int)
     test_index = np.asarray(random_split_indices(truth, 2026)["test"], dtype=int)
     bundle = joblib.load(model_path)
     estimator = bundle["estimator"] if isinstance(bundle, dict) else bundle
+    threshold = float(bundle["config"]["threshold"]) if isinstance(bundle, dict) else 0.30
     development_probability = estimator.predict_proba(values[test_index])[:, 1]
     development = BinaryEvaluation(
         name="Development held-out test",
         truth=truth[test_index],
         probability=development_probability,
-        prediction=(development_probability >= 0.40).astype(int),
+        prediction=(development_probability >= threshold).astype(int),
     )
     july_ledger = pd.read_parquet(july_ledger_path)
     july = BinaryEvaluation(
@@ -134,7 +136,7 @@ def build_class_distribution_figure(
                 ha="center",
                 va="bottom",
             )
-    figure.suptitle("Selected HGB class distribution", fontweight="bold")
+    figure.suptitle("Selected EF-HGB class distribution", fontweight="bold")
     figure.tight_layout()
     _save(figure, output_path)
 
@@ -167,7 +169,7 @@ def build_confusion_matrix_figure(
                     fontweight="bold",
                 )
         figure.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
-    figure.suptitle("Selected HGB confusion matrices", fontweight="bold")
+    figure.suptitle("Selected EF-HGB confusion matrices", fontweight="bold")
     figure.tight_layout()
     _save(figure, output_path)
 
@@ -209,13 +211,13 @@ def build_roc_pr_figure(
         axis.set_ylim(0, 1.02)
         axis.grid(alpha=0.2)
         axis.legend(fontsize=8, loc="lower left")
-    figure.suptitle("Selected HGB threshold-independent discrimination", fontweight="bold")
+    figure.suptitle("Selected EF-HGB threshold-independent discrimination", fontweight="bold")
     figure.tight_layout()
     _save(figure, output_path)
 
 
 def main() -> None:
-    evaluations = load_selected_hgb_evaluations()
+    evaluations = load_selected_detector_evaluations()
     build_class_distribution_figure(evaluations, CLASS_DISTRIBUTION_PATH)
     build_confusion_matrix_figure(evaluations, CONFUSION_MATRIX_PATH)
     build_roc_pr_figure(evaluations, ROC_PR_PATH)

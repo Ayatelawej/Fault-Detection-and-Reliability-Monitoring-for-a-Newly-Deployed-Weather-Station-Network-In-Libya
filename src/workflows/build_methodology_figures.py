@@ -158,7 +158,7 @@ def build_architecture_diagram() -> Path:
     ax.set_ylim(0, 6.6)
 
     boxes = {
-        "raw": ((0.5, 4.25), "Hourly station observations"),
+        "raw": ((0.5, 4.25), "WU hourly observations"),
         "registry": ((0.5, 2.75), "Station registry and install windows"),
         "row": ((3.0, 3.5), "Row-state classifier"),
         "events": ((5.4, 3.5), "Availability events and network windows"),

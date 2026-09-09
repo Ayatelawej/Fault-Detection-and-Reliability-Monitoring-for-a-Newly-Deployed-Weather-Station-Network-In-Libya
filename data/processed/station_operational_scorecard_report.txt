@@ -11,7 +11,7 @@ DEPLOYMENT CONTRACT
 Current fault status is a causal rule-evidence proxy, not the retrospective trained binary detector.
 Event-level trained mechanism reason codes are unavailable in the causal live path and are never filled from held-out prediction ledgers.
 Health forecasts are emitted for transmitting stations, including partial outages, and suppressed during full outages.
-Layer 2 calibration intervals are retrospective; they are excluded from operational fields. Causal persistent pressure-offset evidence is shown separately.
+Calibration-corroboration intervals are retrospective; they are excluded from operational fields. Causal persistent pressure-offset evidence is shown separately.
 
 DISTRIBUTION SUMMARY
                            category          value  count
@@ -137,4 +137,4 @@ station_count=26
 field_count=80
 unexplained_nulls=0
 inconsistency_count=0
-retrospective_layer2_intervals_overlapping_reference_excluded=2
+retrospective_calibration_intervals_overlapping_reference_excluded=2

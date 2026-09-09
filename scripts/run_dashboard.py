@@ -9,7 +9,7 @@ from src.dashboard.replay import (
     FROZEN_STATISTICS_END,
     FROZEN_STATISTICS_ROWS,
     HEALTH_COMPONENT_COLUMNS,
-    SELECTED_HGB_THRESHOLD,
+    SELECTED_DETECTOR_THRESHOLD,
     ReplayBundle,
     build_replay_snapshot,
     event_detector_evidence,
@@ -149,10 +149,10 @@ def _event_page(bundle: ReplayBundle, hour: pd.Timestamp) -> None:
     columns[1].metric("Status", event["status"].title())
     columns[2].metric("Duration", f"{int(event['duration_hours'])} h")
     columns[3].metric("Peak probability", f"{event['peak_probability']:.1%}")
-    st.caption(f"Selected HGB threshold: {SELECTED_HGB_THRESHOLD:.0%}")
+    st.caption(f"Selected EF-HGB threshold: {SELECTED_DETECTOR_THRESHOLD:.0%}")
     evidence = event_detector_evidence(bundle, event)
     if evidence.empty:
-        st.warning("No individual saved detector flag fired inside this HGB-positive event.")
+        st.warning("No individual saved detector flag fired inside this EF-HGB-positive event.")
     else:
         st.dataframe(
             evidence,
@@ -195,7 +195,7 @@ def main() -> None:
     with evidence:
         _event_page(bundle, hour)
     st.caption(
-        f"Selected HGB and health-forecast policies · rule statistics frozen through "
+        f"Selected EF-HGB and health-forecast policies · rule statistics frozen through "
         f"{FROZEN_STATISTICS_END:%d %B %Y} on {FROZEN_STATISTICS_ROWS:,} rows"
     )
     if st.session_state.replay_running:

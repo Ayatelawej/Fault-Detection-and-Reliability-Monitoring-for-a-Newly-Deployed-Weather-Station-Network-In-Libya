@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -8,9 +7,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 MERGED_DIR = DATA_DIR / "merged"
 EXTERNAL_DIR = DATA_DIR / "external"
-FIVE_MINUTE_INPUT_DIR = Path(
-    os.environ.get("FIVE_MINUTE_INPUT_DIR", EXTERNAL_DIR / "five_minute_input")
-)
 LABELS_DIR = DATA_DIR / "labels"
 PROCESSED_DIR = DATA_DIR / "processed"
 EVALUATION_DIR = DATA_DIR / "eval"

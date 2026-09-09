@@ -5,13 +5,111 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from scripts import build_hourly_dataset, build_station_health, generate_report_assets, run_dashboard
+from scripts import (
+    build_hourly_dataset,
+    build_reliability_foundations,
+    build_station_health,
+    generate_report_assets,
+    run_dashboard,
+)
 from scripts import evaluate_outage_risk
 from scripts.evaluate_outage_risk import parse_args as parse_outage_args
 from scripts.generate_report_assets import parse_args as parse_report_args
 from scripts.train_hourly_detection import parse_args as parse_training_args
 from scripts.tune_hourly_detection import parse_args as parse_tuning_args
 from src.workflows import train_hourly_baseline, tune_hourly_detection
+
+
+def test_reliability_foundations_start_from_frozen_input_without_rewriting_it(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    hourly_states = pd.DataFrame({"station_id": ["station"]})
+    full_events = pd.DataFrame({"event_id": ["full"]})
+    network_windows = pd.DataFrame({"window_id": ["network"]})
+    classification = pd.DataFrame({"availability_class": ["online"]})
+    partial_events = pd.DataFrame({"event_id": ["partial"]})
+    structural_gaps = pd.DataFrame({"gap_id": []})
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "MERGED_DATASET_PATH",
+        tmp_path / "station_hourly_merged.csv",
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "HOURLY_ROW_STATES_PATH",
+        tmp_path / "hourly_row_states.parquet",
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "AVAILABILITY_EVENTS_PATH",
+        tmp_path / "availability_events.parquet",
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "NETWORK_OUTAGE_WINDOWS_PATH",
+        tmp_path / "network_outage_windows.csv",
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "require_files",
+        lambda *args, **kwargs: calls.append("preflight"),
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "run_data_audit",
+        lambda: calls.append("audit"),
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations.pd,
+        "read_parquet",
+        lambda path: hourly_states,
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "build_availability_events",
+        lambda frame: full_events,
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "detect_network_outage_windows",
+        lambda *args, **kwargs: network_windows,
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "assign_outage_class",
+        lambda events, windows: events,
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "write_operational_availability_outputs",
+        lambda frame: (classification, partial_events, structural_gaps),
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "write_station_reliability_summary",
+        lambda **kwargs: calls.append("summary"),
+    )
+    monkeypatch.setattr(
+        build_reliability_foundations,
+        "write_availability_report",
+        lambda *args: calls.append("report"),
+    )
+
+    before = b"frozen input"
+    build_reliability_foundations.MERGED_DATASET_PATH.write_bytes(before)
+    result = build_reliability_foundations.build_reliability_foundations()
+
+    assert result == {
+        "hourly_rows": 1,
+        "full_outage_events": 1,
+        "network_outage_windows": 1,
+        "partial_outage_events": 1,
+    }
+    assert build_reliability_foundations.MERGED_DATASET_PATH.read_bytes() == before
+    assert calls == ["preflight", "audit", "summary", "report"]
 
 
 def test_training_front_door_routes_modes_without_consuming_runner_options() -> None:
@@ -24,6 +122,32 @@ def test_training_front_door_routes_modes_without_consuming_runner_options() -> 
 
     assert mode == "reason-codes"
     assert remaining == ["--seed", "11"]
+
+    mode, remaining = parse_training_args(
+        ["one-hour-comparison", "--tensor", "one_hour.npz"]
+    )
+
+    assert mode == "one-hour-comparison"
+    assert remaining == ["--tensor", "one_hour.npz"]
+
+    mode, remaining = parse_training_args(
+        ["one-hour-july", "--tensor", "july.npz"]
+    )
+
+    assert mode == "one-hour-july"
+    assert remaining == ["--tensor", "july.npz"]
+
+    mode, remaining = parse_training_args(
+        ["evidence-fusion", "--tensor", "one_hour.npz"]
+    )
+
+    assert mode == "evidence-fusion"
+    assert remaining == ["--tensor", "one_hour.npz"]
+
+
+def test_hourly_dataset_custom_window_requires_explicit_output() -> None:
+    with pytest.raises(ValueError, match="provided together"):
+        build_hourly_dataset.main(["--window-hours", "1"])
 
 
 def test_reason_code_postprocess_is_described_as_retrospective_not_dashboard_output() -> None:

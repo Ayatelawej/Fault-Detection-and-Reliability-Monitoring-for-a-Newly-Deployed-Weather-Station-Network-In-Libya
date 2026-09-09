@@ -171,6 +171,7 @@ def contextual_evidence(
     cohort: pd.DataFrame | None = None,
     min_samples: int = CONTEXTUAL_BASELINE_MIN_SAMPLES,
     threshold: float = CONTEXTUAL_OUTLIER_Z_THRESHOLD,
+    unavailable_from: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     required = ["station_id", "hour_utc", "channel"]
     if candidate_rows.empty:
@@ -202,8 +203,10 @@ def contextual_evidence(
         median = float(np.median(reference_values)) if count else np.nan
         mad = float(np.median(np.abs(reference_values - median))) if count else np.nan
         floor = float(CONTEXTUAL_MAD_FLOORS.get(str(row.channel), 0.1))
+        period_blocked = unavailable_from is not None and row.hour_utc >= unavailable_from
         available = bool(
-            count >= min_samples
+            not period_blocked
+            and count >= min_samples
             and pd.notna(row.context_value)
             and pd.notna(mad)
             and np.isfinite(mad)
@@ -230,10 +233,25 @@ def contextual_evidence(
     return result.loc[:, CONTEXT_COLUMNS]
 
 
-def detector_thresholds(scores: pd.DataFrame, percentile: float = 99.7) -> pd.DataFrame:
+def detector_thresholds(
+    scores: pd.DataFrame,
+    percentile: float = 99.7,
+    frozen: dict[tuple[str, str], float] | None = None,
+) -> pd.DataFrame:
     frame = normalize_times(scores, ["hour_utc"])
     rows = []
     for channel, group in frame.groupby("channel", sort=False):
+        frozen_zscore = frozen.get((str(channel), "zscore")) if frozen is not None else None
+        frozen_iforest = frozen.get((str(channel), "iforest")) if frozen is not None else None
+        if frozen_zscore is not None and frozen_iforest is not None:
+            rows.append(
+                {
+                    "channel": str(channel),
+                    "zscore_threshold": frozen_zscore,
+                    "iforest_threshold": frozen_iforest,
+                },
+            )
+            continue
         zscore = pd.to_numeric(group.get("zscore"), errors="coerce").abs().dropna()
         iforest = pd.to_numeric(group.get("iforest_score"), errors="coerce").dropna()
         rows.append(
@@ -374,6 +392,8 @@ def build_statistical_evidence(
     scores: pd.DataFrame,
     external_residuals: pd.DataFrame | None = None,
     cohort: pd.DataFrame | None = None,
+    frozen_thresholds: dict[tuple[str, str], float] | None = None,
+    contextual_unavailable_from: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     score_frame = normalize_times(scores, ["hour_utc"])
     for column in ["flag_zscore", "flag_iforest", "flag_physical", "flag_stuck"]:
@@ -401,7 +421,9 @@ def build_statistical_evidence(
             "flag_stuck",
         ],
     ]
-    context = contextual_evidence(raw, score_frame, selected, cohort=cohort)
+    context = contextual_evidence(
+        raw, score_frame, selected, cohort=cohort, unavailable_from=contextual_unavailable_from,
+    )
     result = selected.merge(context, on=["station_id", "hour_utc", "channel"], how="left")
     observed = _observed_values(raw, result)
     result = result.merge(
@@ -409,7 +431,7 @@ def build_statistical_evidence(
         on=["station_id", "hour_utc", "channel"],
         how="left",
     )
-    thresholds = detector_thresholds(score_frame)
+    thresholds = detector_thresholds(score_frame, frozen=frozen_thresholds)
     result = result.merge(thresholds, on="channel", how="left")
     result["both_detectors_same_channel_hour"] = (
         result["flag_zscore"].fillna(False).astype(bool)
@@ -656,6 +678,8 @@ def _flagged_context_evidence(
     scores: pd.DataFrame,
     external_residuals: pd.DataFrame | None,
     cohort: pd.DataFrame,
+    frozen_thresholds: dict[tuple[str, str], float] | None = None,
+    contextual_unavailable_from: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     score_frame = normalize_times(scores, ["hour_utc"])
     if "flag" not in score_frame.columns:
@@ -683,9 +707,11 @@ def _flagged_context_evidence(
             "rolling_variance",
         ],
     ]
-    context = contextual_evidence(raw, score_frame, selected, cohort=cohort)
+    context = contextual_evidence(
+        raw, score_frame, selected, cohort=cohort, unavailable_from=contextual_unavailable_from,
+    )
     result = selected.merge(context, on=["station_id", "hour_utc", "channel"], how="left")
-    result = result.merge(detector_thresholds(score_frame), on="channel", how="left")
+    result = result.merge(detector_thresholds(score_frame, frozen=frozen_thresholds), on="channel", how="left")
     result = _external_values(result, external_residuals)
     result["era5_agrees"] = (
         result["era5_available"].astype(bool)
@@ -701,6 +727,8 @@ def build_benign_review(
     scores: pd.DataFrame,
     external_residuals: pd.DataFrame | None = None,
     cohort: pd.DataFrame | None = None,
+    frozen_thresholds: dict[tuple[str, str], float] | None = None,
+    contextual_unavailable_from: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     label_frame = normalize_times(labels, ["start_hour", "end_hour"])
     if "label_state" not in label_frame.columns:
@@ -710,7 +738,9 @@ def build_benign_review(
     if benign.empty:
         return pd.DataFrame(columns=BENIGN_REVIEW_COLUMNS)
     cohort_frame = build_contextual_cohort(raw, scores) if cohort is None else cohort
-    evidence = _flagged_context_evidence(raw, scores, external_residuals, cohort_frame)
+    evidence = _flagged_context_evidence(
+        raw, scores, external_residuals, cohort_frame, frozen_thresholds, contextual_unavailable_from,
+    )
     by_station = {
         station_id: frame.sort_values("hour_utc")
         for station_id, frame in evidence.groupby("station_id", sort=False)

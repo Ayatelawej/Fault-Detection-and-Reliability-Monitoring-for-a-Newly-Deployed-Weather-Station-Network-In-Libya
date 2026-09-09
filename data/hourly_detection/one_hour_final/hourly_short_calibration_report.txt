@@ -1,0 +1,72 @@
+SHORT-WINDOW BINARY CALIBRATION
+
+SELECTION RULE
+All operating points are selected from validation metrics only.
+The balanced point maximizes the minimum of precision, recall, and F1, with deterministic tie resolution.
+
+SPLIT random
+VALIDATION F1 SURFACE
+threshold               0.30      0.35      0.40      0.45      0.50      0.55      0.60      0.65      0.70      0.75      0.80
+fault_class_weight                                                                                                              
+1.0                 0.922911  0.921777  0.920493  0.922554  0.915995  0.903201  0.896252  0.887645  0.881738  0.875759  0.873479
+2.0                 0.896876  0.915596  0.921714  0.921470  0.918562  0.917472  0.917424  0.910983  0.897799  0.884892  0.877576
+4.0                 0.839225  0.854808  0.874232  0.894086  0.911593  0.916960  0.919871  0.920263  0.916916  0.909509  0.894654
+6.0                 0.813408  0.830751  0.845297  0.859583  0.876383  0.897246  0.911349  0.916873  0.919899  0.916296  0.910823
+8.0                 0.802685  0.814375  0.828987  0.841716  0.857413  0.874232  0.888298  0.905790  0.911464  0.916516  0.909091
+10.0                0.790471  0.806925  0.815938  0.830900  0.841975  0.855168  0.869733  0.889258  0.909466  0.911932  0.915969
+13.0                0.778217  0.791499  0.804678  0.814353  0.825943  0.836141  0.851250  0.863520  0.884259  0.904270  0.914408
+
+MAXIMUM VALIDATION F1 POINT
+ fault_class_weight  threshold  precision   recall       f1  minimum_metric
+                1.0        0.3   0.923576 0.922246 0.922911        0.922246
+
+MOST BALANCED VALIDATION POINT
+ fault_class_weight  threshold  precision   recall       f1  minimum_metric
+                1.0        0.3   0.923576 0.922246 0.922911        0.922246
+
+FINAL TEST METRICS
+ precision   recall       f1  accuracy
+   0.91394 0.925126 0.919499  0.988481
+FINAL TEST CONFUSION MATRIX
+  tp  fp  fn    tn
+1285 121 104 18023
+target_90_90_90_achieved=True
+precision_shortfall=0.000000
+recall_shortfall=0.000000
+f1_shortfall=0.000000
+binding_constraint=precision
+test_evaluation_count=1
+
+SPLIT spaced
+VALIDATION F1 SURFACE
+threshold               0.30      0.35      0.40      0.45      0.50      0.55      0.60      0.65      0.70      0.75      0.80
+fault_class_weight                                                                                                              
+1.0                 0.907120  0.900442  0.897714  0.899207  0.900228  0.896844  0.898798  0.900507  0.900548  0.900745  0.900314
+2.0                 0.879362  0.893398  0.901488  0.903714  0.902681  0.898248  0.898036  0.894918  0.894900  0.899025  0.899255
+4.0                 0.825310  0.843119  0.859968  0.876241  0.889041  0.907362  0.905946  0.899779  0.897378  0.894557  0.892320
+6.0                 0.799301  0.809976  0.832112  0.849812  0.861804  0.876486  0.893705  0.905928  0.902430  0.897293  0.895715
+8.0                 0.787374  0.798368  0.808636  0.827774  0.841226  0.858503  0.877377  0.892140  0.906470  0.909354  0.899592
+10.0                0.777683  0.787130  0.797553  0.808863  0.825204  0.841876  0.857416  0.874672  0.892760  0.909735  0.909422
+13.0                0.762037  0.774922  0.786330  0.797786  0.810539  0.821084  0.833742  0.851211  0.872645  0.889718  0.911994
+
+MAXIMUM VALIDATION F1 POINT
+ fault_class_weight  threshold  precision   recall       f1  minimum_metric
+               13.0        0.8   0.906845 0.917202 0.911994        0.906845
+
+MOST BALANCED VALIDATION POINT
+ fault_class_weight  threshold  precision   recall       f1  minimum_metric
+               13.0        0.8   0.906845 0.917202 0.911994        0.906845
+
+FINAL TEST METRICS
+ precision   recall       f1  accuracy
+  0.902996 0.899787 0.901388  0.985829
+FINAL TEST CONFUSION MATRIX
+  tp  fp  fn    tn
+1266 136 141 18004
+target_90_90_90_achieved=False
+precision_shortfall=0.000000
+recall_shortfall=0.000213
+f1_shortfall=0.000000
+binding_constraint=recall
+test_evaluation_count=1
+

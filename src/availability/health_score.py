@@ -1152,17 +1152,21 @@ def summarize_delete_future_health_validation(audit: pd.DataFrame) -> pd.DataFra
 
 def select_contrasting_stations(
     scores: pd.DataFrame,
-    layer2: pd.DataFrame | None = None,
+    calibration_corroboration: pd.DataFrame | None = None,
 ) -> dict[str, str]:
     summary = build_station_health_summary(scores)
     if summary.empty:
         return {}
     selected: dict[str, str] = {}
     selected["stable"] = str(summary.iloc[0]["station_id"])
-    if layer2 is not None and {"station_id", "verdict"}.issubset(layer2.columns):
+    if calibration_corroboration is not None and {
+        "station_id",
+        "verdict",
+    }.issubset(calibration_corroboration.columns):
         confirmed = set(
-            layer2.loc[
-                layer2["verdict"].astype(str).eq("confirmed"), "station_id"
+            calibration_corroboration.loc[
+                calibration_corroboration["verdict"].astype(str).eq("confirmed"),
+                "station_id",
             ].astype(str)
         )
         candidates = summary.loc[summary["station_id"].isin(confirmed)]
@@ -1188,7 +1192,7 @@ def _save_figure(figure: plt.Figure, path: Path) -> Path:
 def generate_station_health_figures(
     scores: pd.DataFrame,
     *,
-    layer2: pd.DataFrame | None = None,
+    calibration_corroboration: pd.DataFrame | None = None,
     hard_zero_baseline: pd.DataFrame | None = None,
     outage_trajectory: pd.DataFrame | None = None,
     output_paths: dict[str, Path] | None = None,
@@ -1215,7 +1219,7 @@ def generate_station_health_figures(
     figure.tight_layout()
     _save_figure(figure, Path(paths["components"]))
 
-    selections = select_contrasting_stations(valid, layer2)
+    selections = select_contrasting_stations(valid, calibration_corroboration)
     figure, axis = plt.subplots(figsize=(11, 5))
     colors = {"stable": "#43835f", "confirmed_offset": "#c48a2c", "heavy_outage": "#b75b5b"}
     for role, station_id in selections.items():
@@ -1323,7 +1327,7 @@ def build_station_health_report(
     scores: pd.DataFrame,
     *,
     causality_summary: pd.DataFrame,
-    layer2: pd.DataFrame | None = None,
+    calibration_corroboration: pd.DataFrame | None = None,
     version_comparison: dict[str, pd.DataFrame] | None = None,
     outage_duration_curve: pd.DataFrame | None = None,
     outage_trajectory: pd.DataFrame | None = None,
@@ -1336,7 +1340,7 @@ def build_station_health_report(
     changes = health_change_summary(scores)
     crossings = health_band_crossing_summary(scores)
     correlations = component_correlation(scores)
-    selections = select_contrasting_stations(scores, layer2)
+    selections = select_contrasting_stations(scores, calibration_corroboration)
     status_counts = scores["health_status"].value_counts().rename_axis("health_status").reset_index(name="count")
     duration_curve = (
         build_outage_duration_curve()
@@ -1372,7 +1376,7 @@ def build_station_health_report(
         "health_total = 30*availability + 20*sensor_completeness + 25*fault_evidence_burden + 15*reference_consistency + 10*stability",
         "All five components are normalized to 0–1 before their fixed design weights are applied.",
         "Fault burden is a trailing, exponentially recency-weighted (24-hour half-life) rate of causally reconstructed physical-limit, stuck, or deviation evidence. It does not use reviewed episode labels. Stability counts only full/partial communication failures and hard physical/stuck evidence as recurring operational events, so isolated contextual deviations do not become a sequence of artificial event starts.",
-        "Reference consistency uses exact-hour external reference residuals, prior-only residual history, and a causal fleet-relative pressure-persistence check. Completed Layer 2 intervals are not score inputs; where supplied, they only select a retrospective sanity-check plot.",
+        "Reference consistency uses exact-hour external reference residuals, prior-only residual history, and a causal fleet-relative pressure-persistence check. Completed calibration-corroboration intervals are not score inputs; where supplied, they only select a retrospective sanity-check plot.",
         "Spatial neighbour availability is not an input to this score, so stations without peers receive no penalty.",
         "Active outages apply a fixed causal duration multiplier to all five normalized components before weighting: exp(-d/24) for a full outage and exp(-d/72) for a partial outage, where d is the consecutive active duration in completed hours. These fixed 24-hour and 72-hour decay constants are engineering design choices, not fitted or tuned parameters. The multiplier is 1 for a transmitting station, preserves the weighted-component sum, and lets a newly dropped station remain distinguishable from a prolonged outage.",
         "For a partial outage, d is the consecutive period in which the station has remained partially degraded; the separate sensor-completeness component and absent-group fields retain the group-level severity evidence.",
@@ -1412,7 +1416,7 @@ def build_station_health_report(
         "",
         "7. CONTRASTING TIME-SERIES SELECTION",
         *[f"{role}: {station_id}" for role, station_id in selections.items()],
-        "A confirmed-offset case is selected from Layer 2 only for the visual sanity check; its reviewed interval does not change the score.",
+        "A confirmed-offset case is selected from calibration corroboration only for the visual sanity check; its reviewed interval does not change the score.",
         "",
         "8. COMPONENT CORRELATION",
         correlations.to_string(),
@@ -1456,7 +1460,7 @@ def write_station_health_outputs(
     causality_audit: pd.DataFrame,
     input_hashes_before: dict[str, str],
     input_hashes_after: dict[str, str],
-    layer2: pd.DataFrame | None = None,
+    calibration_corroboration: pd.DataFrame | None = None,
     previous_scores: pd.DataFrame | None = None,
     output_paths: dict[str, Path] | None = None,
     generate_figures: bool = True,
@@ -1560,7 +1564,7 @@ def write_station_health_outputs(
         build_station_health_report(
             scores,
             causality_summary=causality_summary,
-            layer2=layer2,
+            calibration_corroboration=calibration_corroboration,
             version_comparison=version_comparison,
             outage_duration_curve=duration_curve,
             outage_trajectory=outage_trajectory,
@@ -1591,7 +1595,7 @@ def write_station_health_outputs(
         result.update(
             generate_station_health_figures(
                 scores,
-                layer2=layer2,
+                calibration_corroboration=calibration_corroboration,
                 hard_zero_baseline=hard_zero_baseline,
                 outage_trajectory=outage_trajectory,
             )

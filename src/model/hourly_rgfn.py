@@ -22,7 +22,8 @@ CONV_SECOND_CHANNELS = 64
 DEFAULT_DROPOUT = 0.3
 ENCODER_GRU = "gru"
 ENCODER_CONV = "conv"
-ENCODER_NAMES = (ENCODER_GRU, ENCODER_CONV)
+ENCODER_MLP = "mlp"
+ENCODER_NAMES = (ENCODER_GRU, ENCODER_CONV, ENCODER_MLP)
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,8 @@ class HourlyReliabilityAwareGatedFusionNetwork(nn.Module):
             raise ValueError("a multi-label hourly RGFN needs a mechanism_count within its output width")
         if self.window_hours < 1:
             raise ValueError("hourly RGFN window_hours must be positive")
+        if self.encoder_name == ENCODER_MLP and self.window_hours != 1:
+            raise ValueError("the RGFN MLP encoder requires a one-hour input")
         if not 0.0 <= resolved_dropout < 1.0:
             raise ValueError("hourly RGFN dropout must be in [0, 1)")
         if self.mask_mode not in MASK_MODES:
@@ -112,7 +115,7 @@ class HourlyReliabilityAwareGatedFusionNetwork(nn.Module):
                 bidirectional=False,
             )
             self.sensor_projection: nn.Module = nn.Identity()
-        else:
+        elif self.encoder_name == ENCODER_CONV:
             self.sensor_encoder = nn.Sequential(
                 nn.Conv1d(self.input_width, CONV_FIRST_CHANNELS, kernel_size=3, padding=1),
                 nn.ReLU(),
@@ -121,6 +124,15 @@ class HourlyReliabilityAwareGatedFusionNetwork(nn.Module):
                 nn.ReLU(),
             )
             self.sensor_projection = nn.Linear(CONV_SECOND_CHANNELS, self.sensor_hidden_size)
+        else:
+            self.sensor_encoder = nn.Sequential(
+                nn.Linear(self.input_width, self.sensor_hidden_size),
+                nn.ReLU(),
+                nn.Dropout(resolved_dropout),
+                nn.Linear(self.sensor_hidden_size, self.sensor_hidden_size),
+                nn.ReLU(),
+            )
+            self.sensor_projection = nn.Identity()
         self.temporal_head = nn.Linear(self.sensor_hidden_size, self.output_dim)
         self.rule_net = nn.Sequential(
             nn.Linear(self.n_rule_evidence, int(base.evidence_hidden_size)),
@@ -192,6 +204,8 @@ class HourlyReliabilityAwareGatedFusionNetwork(nn.Module):
         if self.encoder_name == ENCODER_GRU:
             _, hidden = self.sensor_encoder(sequence)
             return self.temporal_dropout(hidden[-1])
+        if self.encoder_name == ENCODER_MLP:
+            return self.temporal_dropout(self.sensor_encoder(sequence[:, 0, :]))
         encoded = self.sensor_encoder(sequence.transpose(1, 2))
         pooled = encoded.mean(dim=-1)
         return self.temporal_dropout(torch.relu(self.sensor_projection(pooled)))
@@ -269,8 +283,14 @@ class HourlyRgfnConv(HourlyReliabilityAwareGatedFusionNetwork):
         super().__init__(encoder=ENCODER_CONV, config=config, **kwargs)
 
 
+class HourlyRgfnMlp(HourlyReliabilityAwareGatedFusionNetwork):
+    def __init__(self, config: HourlyRgfnConfig | None = None, **kwargs: object) -> None:
+        super().__init__(encoder=ENCODER_MLP, config=config, **kwargs)
+
+
 HourlyRGFNGRU = HourlyRgfnGru
 HourlyRGFNConv = HourlyRgfnConv
+HourlyRGFNMLP = HourlyRgfnMlp
 HourlyRuleGatedFusionNetwork = HourlyReliabilityAwareGatedFusionNetwork
 
 
@@ -284,4 +304,6 @@ def build_hourly_rgfn(
         return HourlyRgfnGru(config=config, **kwargs)
     if resolved == ENCODER_CONV:
         return HourlyRgfnConv(config=config, **kwargs)
+    if resolved == ENCODER_MLP:
+        return HourlyRgfnMlp(config=config, **kwargs)
     raise KeyError(f"unknown hourly RGFN encoder: {encoder}")

@@ -5,6 +5,8 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 import sys
 
+import pandas as pd
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -41,11 +43,39 @@ def parse_args(argv: list[str] | None = None) -> Namespace:
     parser.add_argument("--mask-mode", choices=MASK_MODES, default=MASK_MODE_PER_HOUR)
     parser.add_argument("--short-output", type=Path)
     parser.add_argument("--long-output", type=Path)
+    parser.add_argument("--window-hours", type=int)
+    parser.add_argument("--window-output", type=Path)
     return parser.parse_args(argv)
+
+
+def _build_window_tensor(
+    hourly: pd.DataFrame,
+    labels: pd.DataFrame,
+    window_hours: int,
+    output: Path,
+    mask_mode: str,
+) -> None:
+    if int(window_hours) < 1:
+        raise ValueError("window hours must be positive")
+    examples = build_hourly_examples(
+        hourly,
+        labels,
+        int(window_hours),
+        mask_mode=mask_mode,
+    )
+    tensor_path = write_hourly_tensor(examples, Path(output))
+    print("WINDOW OUTPUT")
+    print(f"mask_mode={mask_mode}")
+    print(f"window_hours={int(window_hours)}")
+    print(f"tensor={tensor_path}")
+    print(f"X_cont_shape={examples['X_cont'].shape}")
+    print(f"mask_shape={examples['mask'].shape}")
 
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    if (args.window_hours is None) != (args.window_output is None):
+        raise ValueError("--window-hours and --window-output must be provided together")
     require_files(
         "Hourly dataset construction",
         {
@@ -58,6 +88,15 @@ def main(argv: list[str] | None = None) -> None:
     hourly = load_hourly_frame(args.source, args.features)
     episodes = load_labelled_episodes(args.labels)
     labels = build_hourly_labels(hourly, episodes)
+    if args.window_hours is not None:
+        _build_window_tensor(
+            hourly,
+            labels,
+            args.window_hours,
+            args.window_output,
+            args.mask_mode,
+        )
+        return
     labels_path = write_hourly_labels(labels, args.labels_output)
     if args.mask_mode == MASK_MODE_PER_FEATURE:
         default_short_output = HOURLY_DATA_DIR / "hourly_detection_short_per_feature_mask.npz"

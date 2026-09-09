@@ -7,6 +7,7 @@ from src.rules.statistical_gate import (
     build_benign_review,
     build_statistical_evidence,
     build_statistical_review,
+    detector_thresholds,
 )
 
 
@@ -172,6 +173,35 @@ def test_context_needs_fifteen_leave_one_out_reference_values() -> None:
     assert not result.loc[0, "full_gate_passed"]
 
 
+def test_contextual_unavailable_from_forces_context_unavailable_despite_enough_samples() -> None:
+    raw = _raw("humidity_avg_pct", [50.0] * 16 + [80.0])
+    scores = _scores(raw, "humidity_avg_pct")
+    target_hour = raw["hour_utc"].iloc[-1]
+
+    blocked = build_statistical_evidence(
+        raw, scores, contextual_unavailable_from=target_hour,
+    )
+    unblocked = build_statistical_evidence(raw, scores)
+
+    assert unblocked.loc[0, "context_available"]
+    assert not blocked.loc[0, "context_available"]
+    assert pd.isna(blocked.loc[0, "contextual_zscore"])
+    assert not blocked.loc[0, "contextual_outlier"]
+    assert blocked.loc[0, "context_baseline_n"] == unblocked.loc[0, "context_baseline_n"]
+
+
+def test_contextual_unavailable_from_leaves_earlier_rows_untouched() -> None:
+    raw = _raw("humidity_avg_pct", [50.0] * 16 + [80.0])
+    scores = _scores(raw, "humidity_avg_pct")
+    far_future = raw["hour_utc"].iloc[-1] + pd.Timedelta(days=1)
+
+    result = build_statistical_evidence(
+        raw, scores, contextual_unavailable_from=far_future,
+    )
+
+    assert result.loc[0, "context_available"]
+
+
 def test_rain_context_uses_logarithmic_detector_scale() -> None:
     raw = _raw("precip_rate_mmh", [0.0] * 16 + [99.0])
     scores = _scores(raw, "precip_rate_mmh")
@@ -274,3 +304,26 @@ def test_statistical_review_keeps_a_shared_witness_for_every_matching_episode() 
 
     assert set(result["episode_id"]) == {"v2_000001", "v2_000002"}
     assert set(result["evidence_path"]) == {"A"}
+
+
+def test_detector_thresholds_uses_frozen_values_instead_of_recomputing() -> None:
+    raw = _raw("temp_avg_c", [10.0, 11.0, 12.0, 200.0])
+    scores = _scores(raw, "temp_avg_c")
+    frozen = {("temp_avg_c", "zscore"): 42.0, ("temp_avg_c", "iforest"): 43.0}
+
+    default_result = detector_thresholds(scores)
+    frozen_result = detector_thresholds(scores, frozen=frozen)
+
+    assert default_result.loc[0, "zscore_threshold"] != 42.0
+    assert frozen_result.loc[0, "zscore_threshold"] == 42.0
+    assert frozen_result.loc[0, "iforest_threshold"] == 43.0
+
+
+def test_detector_thresholds_falls_back_to_recomputing_missing_channels() -> None:
+    raw = _raw("temp_avg_c", [10.0, 11.0, 12.0, 200.0])
+    scores = _scores(raw, "temp_avg_c")
+
+    result = detector_thresholds(scores, frozen={})
+
+    assert not result.empty
+    assert pd.notna(result.loc[0, "zscore_threshold"])

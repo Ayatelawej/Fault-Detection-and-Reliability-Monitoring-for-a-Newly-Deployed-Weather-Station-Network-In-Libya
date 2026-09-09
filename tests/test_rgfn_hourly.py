@@ -7,7 +7,7 @@ import torch
 
 from src.model.feature_spec import CONTINUOUS_FEATURES, RULE_EVIDENCE_FLAGS, STATIC_FEATURES, rule_evidence_feature_names
 from src.model.hourly_detection import MASK_MODE_PER_FEATURE, MASK_MODE_PER_HOUR, build_hourly_examples, build_hourly_labels
-from src.model.hourly_rgfn import ENCODER_CONV, ENCODER_GRU, HourlyRgfnConfig, build_hourly_rgfn
+from src.model.hourly_rgfn import ENCODER_CONV, ENCODER_GRU, ENCODER_MLP, HourlyRgfnConfig, build_hourly_rgfn
 from src.model.hourly_rgfn_training import HourlyRgfnTrainingConfig, master_comparison_frame, train_hourly_rgfn_variant
 
 
@@ -109,6 +109,26 @@ def test_hourly_rgfn_reason_code_outputs_keep_independent_mechanism_and_componen
     assert torch.allclose(output["reason_code_logits"], expected)
     assert torch.allclose(output["reason_code_probabilities"], torch.sigmoid(expected))
     assert model.parameter_count() > binary.parameter_count()
+
+
+def test_hourly_rgfn_mlp_uses_one_current_hour_and_retains_the_gate() -> None:
+    count = 4
+    config = HourlyRgfnConfig(window_hours=1)
+    x_cont = torch.randn(count, 1, len(CONTINUOUS_FEATURES))
+    mask = torch.ones(count, 1, 1)
+    time_since_last = torch.zeros(count, 1, 1)
+    static = torch.randn(count, len(STATIC_FEATURES))
+    rule_evidence = torch.randn(count, len(rule_evidence_feature_names()))
+    model = build_hourly_rgfn(ENCODER_MLP, config=config)
+
+    output = model(x_cont, mask, time_since_last, static, rule_evidence)
+    expected = output["alpha"] * output["sensor_logit"] + (1.0 - output["alpha"]) * output["evidence_logit"]
+
+    assert output["binary_prob"].shape == (count,)
+    assert torch.allclose(output["fault_logit"], expected)
+    assert torch.all((output["alpha"] >= 0.0) & (output["alpha"] <= 1.0))
+    with pytest.raises(ValueError, match="one-hour"):
+        build_hourly_rgfn(ENCODER_MLP)
 
 
 @pytest.mark.parametrize(

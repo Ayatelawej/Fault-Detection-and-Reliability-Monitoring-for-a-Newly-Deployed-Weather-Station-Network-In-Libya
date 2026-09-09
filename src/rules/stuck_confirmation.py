@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-from src.config.paths import FIVE_MINUTE_INPUT_DIR
 
-
-FIVE_MIN_DIR = FIVE_MINUTE_INPUT_DIR
+FIVE_MIN_DIR = Path(
+    os.environ.get(
+        "MOZN_FIVE_MIN_DIR",
+        Path.home() / "Desktop" / "Mozn Weather Dataset" / "per_station_weather_data",
+    )
+)
 MIN_5MIN_OBS = 24
 CONSTANCY_THRESHOLD = 0.99
 VALUE_PRECISION = 2

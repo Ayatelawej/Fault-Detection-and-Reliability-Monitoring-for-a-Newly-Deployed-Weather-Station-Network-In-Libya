@@ -1,0 +1,2 @@
+sample_rows_validated,features_validated,comparisons,failed_comparisons,all_passed
+1,234,234,0,True

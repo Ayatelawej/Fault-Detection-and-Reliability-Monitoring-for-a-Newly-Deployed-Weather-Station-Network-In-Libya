@@ -85,13 +85,13 @@ def test_validate_row_count_rejects_truncated_fixture() -> None:
         validate_reference_index(frame)
 
 
-def test_reference_index_contract_is_dynamic_and_june_inclusive() -> None:
+def test_reference_index_contract_is_dynamic_and_july_inclusive() -> None:
     expected = expected_reference_index()
 
-    assert EXTERNAL_EXPECTED_ROWS == 9_144
+    assert EXTERNAL_EXPECTED_ROWS == 9_888
     assert len(expected) == EXTERNAL_EXPECTED_ROWS
     assert expected[0] == pd.Timestamp("2025-06-15 00:00:00+00:00")
-    assert expected[-1] == pd.Timestamp("2026-06-30 23:00:00+00:00")
+    assert expected[-1] == pd.Timestamp("2026-07-31 23:00:00+00:00")
 
 
 def test_validate_reference_index_rejects_a_same_length_shifted_range() -> None:

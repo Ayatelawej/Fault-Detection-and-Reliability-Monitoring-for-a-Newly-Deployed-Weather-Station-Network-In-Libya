@@ -1,0 +1,7 @@
+FROZEN ONE-HOUR EF-HGB JULY EVALUATION
+
+The model family, class weight, and threshold were selected from development validation before this July evaluation.
+July was scored once without fitting, calibration, or threshold changes.
+
+         configuration  threshold  rows  fault_support  not_fault_support  precision   recall       f1  accuracy   tp  fp  fn    tn    auroc    auprc                                                     model_sha256
+random_one_hour_ef_hgb        0.3 13565           1701              11864   0.742499 0.800118 0.770232   0.94014 1361 472 340 11392 0.981692 0.886109 262182f1431b2c2c5b1cd2bc4e3cf6724cbc3579c4a30176417492138bf13305

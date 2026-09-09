@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -17,6 +18,12 @@ from src.rules.result_figures import (
     solar_station_clear_day_ratio,
     spatial_external_pairs,
     systemic_tier_counts,
+)
+from src.workflows.build_july_evaluation_figures import (
+    BinaryEvaluation,
+    build_class_distribution_figure,
+    build_confusion_matrix_figure,
+    build_roc_pr_figure,
 )
 
 
@@ -164,6 +171,35 @@ def test_plotting_functions_write_pngs(tmp_path: Path) -> None:
         plot_spatial_vs_external(pairs, tmp_path / "pairs.png"),
         plot_localized_spatial(episodes, merged, external, spatial, tmp_path / "localized.png"),
     ]
+
+    for path in paths:
+        _assert_png(path)
+
+
+def test_selected_detector_evaluation_figures_write_pngs(tmp_path: Path) -> None:
+    evaluations = (
+        BinaryEvaluation(
+            "Development held-out test",
+            np.array([0, 0, 1, 1]),
+            np.array([0.05, 0.20, 0.75, 0.90]),
+            np.array([0, 0, 1, 1]),
+        ),
+        BinaryEvaluation(
+            "Independent July test",
+            np.array([0, 0, 1, 1]),
+            np.array([0.10, 0.60, 0.55, 0.80]),
+            np.array([0, 1, 1, 1]),
+        ),
+    )
+    paths = [
+        tmp_path / "distribution.png",
+        tmp_path / "confusion.png",
+        tmp_path / "curves.png",
+    ]
+
+    build_class_distribution_figure(evaluations, paths[0])
+    build_confusion_matrix_figure(evaluations, paths[1])
+    build_roc_pr_figure(evaluations, paths[2])
 
     for path in paths:
         _assert_png(path)

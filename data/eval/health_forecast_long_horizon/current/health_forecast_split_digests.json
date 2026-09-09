@@ -1,0 +1,116 @@
+{
+  "120": {
+    "metadata": {
+      "horizon_h": 120,
+      "label_span_hours": 120,
+      "purged_before_test_rows": 3120,
+      "purged_before_validation_rows": 3120,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-01T17:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-02T11:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-04-26T17:00:00+00:00",
+      "validation_start_utc": "2026-03-07T11:00:00+00:00"
+    },
+    "purged": "3c73c257c4075708c36a0b06e4618cad1149bcc8515767106454dbb3b784a3cb",
+    "test": "6d5514fca9eec7b755cd13d31a6ff7899ff5487099f8b4286b916d80cf9cbb67",
+    "train": "f103989541305e71c6a110ab3c4e70153b96aecf9c264f1d591766ac0fa12503",
+    "validation": "c1c4459cf5b8c115999ec3be4090e0d5db0cd7ce3b38d393ae96acf955fca745"
+  },
+  "144": {
+    "metadata": {
+      "horizon_h": 144,
+      "label_span_hours": 144,
+      "purged_before_test_rows": 3744,
+      "purged_before_validation_rows": 3744,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-04-30T20:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-02-28T18:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-04-24T20:00:00+00:00",
+      "validation_start_utc": "2026-03-06T18:00:00+00:00"
+    },
+    "purged": "5044cca9453d21a4f3842b5f2a8a403559493af5ce07d696784b594b8ab8e482",
+    "test": "7575010d880f55727f2f02cac33be92342df4bebd099897d74e324e685941ba8",
+    "train": "16a9c2728960568c03eb3c5dca3f45ff391ec1b4544db3cef26b2b35057b7eea",
+    "validation": "7caafab57ad29b52b960b8ea626fe88dde32a1360726b934a8a263b3d8069d64"
+  },
+  "168": {
+    "metadata": {
+      "horizon_h": 168,
+      "label_span_hours": 168,
+      "purged_before_test_rows": 4368,
+      "purged_before_validation_rows": 4368,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-04-30T00:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-02-27T01:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-04-23T00:00:00+00:00",
+      "validation_start_utc": "2026-03-06T01:00:00+00:00"
+    },
+    "purged": "51b8ad5b65862df73e7c7fccb9cb798ddeadbbde5010597d01511dd5d014d290",
+    "test": "11a4a923b9ea2125ca4e14137eec7a7fd9e1af65a3fce1adf9f268e36e0d78ab",
+    "train": "a303d092904d815fc8d35ba38bd4e839380c3c3c2e4c14c8949723da04ab8ddd",
+    "validation": "d58776585ba326a0167a30d74965816a1564ca895c8e97ac77bafb0129a95d82"
+  },
+  "48": {
+    "metadata": {
+      "horizon_h": 48,
+      "label_span_hours": 48,
+      "purged_before_test_rows": 1248,
+      "purged_before_validation_rows": 1248,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-04T06:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-07T13:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-02T06:00:00+00:00",
+      "validation_start_utc": "2026-03-09T13:00:00+00:00"
+    },
+    "purged": "9ebff2c4659ba4cbd45ae4fcf171c036043c048032baa9f78cfaa162739fb806",
+    "test": "4a29708f8e2c803b963c2f0843d2cf2bc5c1fd81850fa7a1f74ef61dedafe028",
+    "train": "64a18c95c39ede1d3ff94e7f0ba94d0a4752be1de4a5924f47927a860c33f4e7",
+    "validation": "0f45bed4abfe05c7b3270d593f127fae6aeef621aa6b8ddb2d33b479c9f21691"
+  },
+  "72": {
+    "metadata": {
+      "horizon_h": 72,
+      "label_span_hours": 72,
+      "purged_before_test_rows": 1872,
+      "purged_before_validation_rows": 1872,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-03T10:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-05T21:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-04-30T10:00:00+00:00",
+      "validation_start_utc": "2026-03-08T21:00:00+00:00"
+    },
+    "purged": "d5a169eee1f7ad61f08dd46d1168ec08cbff858ea10672cca5c15c3425278c82",
+    "test": "d63c4efe16328d642cb583168780eba0aa14b37bbee413dd5d452e53063cd530",
+    "train": "fa544dd4a19c354150dfb213f9abce478cdc3a89ec0229c4809cb8b1347af9b7",
+    "validation": "bbb6cb1de871082b5a4cf4e8cef32cd1334ea2d243a7011e1beefbb8e2a6e838"
+  },
+  "96": {
+    "metadata": {
+      "horizon_h": 96,
+      "label_span_hours": 96,
+      "purged_before_test_rows": 2496,
+      "purged_before_validation_rows": 2496,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-02T13:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-04T04:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-04-28T13:00:00+00:00",
+      "validation_start_utc": "2026-03-08T04:00:00+00:00"
+    },
+    "purged": "ae02fde550c32c4f836bf7c11da4b2e5c43361f5d33603c7f9cbeffa0ae5a56d",
+    "test": "78c336d2961a1a960327ec4d2114a77e3aa91215eccf22e87d65ce74892e06f4",
+    "train": "19fbe7d35de0bb35b88d2032cb8d23a538f699b47861b5081beec05fe941050a",
+    "validation": "8d3a4d5bc760fb31dc1730255a43d7d7c021864fdf46ed35031de239df3b0ce6"
+  }
+}

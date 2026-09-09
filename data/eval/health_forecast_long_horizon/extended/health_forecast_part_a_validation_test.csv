@@ -1,0 +1,7 @@
+partition,method,n,mae,rmse,r2
+validation,persistence,34216,7.719746,12.156494,0.772171
+validation,no_new_incident_roll_forward,34216,10.692857,16.684007,0.570866
+validation,legacy_hgb,34216,10.414566,14.233138,0.687685
+test,persistence,34892,7.321222,11.82125,0.748457
+test,no_new_incident_roll_forward,34892,10.684404,17.504223,0.448469
+test,legacy_hgb,34892,17.619613,19.639723,0.305687

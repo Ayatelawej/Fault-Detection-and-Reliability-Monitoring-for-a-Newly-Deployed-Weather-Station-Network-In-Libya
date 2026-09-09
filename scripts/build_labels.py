@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -10,16 +11,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config.paths import LABELS_DIR, MERGED_DATASET_PATH
+from src.rules.channel_handlers import numeric_channels
 from src.rules.episodes import build_episodes
 from src.rules.events import build_events
+from src.rules.frozen_statistics import load_frozen_rule_statistics
 from src.rules.labelling import (
     build_crosswalk,
     build_episode_labels,
     crosswalk_summary,
 )
-from src.rules.layer2_calibration import (
-    attach_resolution_to_layer2,
-    build_layer2_calibration,
+from src.rules.calibration_corroboration import (
+    attach_resolution_to_calibration_corroboration,
+    build_calibration_corroboration,
     derive_borderline_evidence,
     resolve_borderline_labels,
     tag_borderline_review,
@@ -39,27 +42,10 @@ LABEL_PATH = LABELS_DIR / "episode_labels.csv"
 CROSSWALK_PATH = LABELS_DIR / "label_crosswalk.csv"
 STATISTICAL_REVIEW_PATH = LABELS_DIR / "statistical_anomaly_review.csv"
 BENIGN_REVIEW_PATH = LABELS_DIR / "benign_review_ranked.csv"
-LAYER2_PATH = LABELS_DIR / "calibration_offset_layer2.csv"
+CALIBRATION_CORROBORATION_PATH = LABELS_DIR / "calibration_offset_corroboration.csv"
 FROZEN_LABELS_PATH = LABELS_DIR / "fault_episodes_labeled_FULL.csv"
 EXTERNAL_RESIDUALS_PATH = PROJECT_ROOT / "data/features/external_residuals.parquet"
 SPATIAL_RESIDUALS_PATH = PROJECT_ROOT / "data/features/spatial_residuals.parquet"
-METADATA_NUMERIC_COLUMNS = {
-    "n_raw_records",
-    "latitude",
-    "longitude",
-    "qc_status",
-    "epoch",
-    "data_present",
-    "elevation",
-}
-
-
-def numeric_channels(frame: pd.DataFrame) -> list[str]:
-    return [
-        column
-        for column in frame.select_dtypes(include=[np.number]).columns
-        if column not in METADATA_NUMERIC_COLUMNS
-    ]
 
 
 def _rate(numerator: int, denominator: int) -> str:
@@ -130,8 +116,10 @@ def _borderline_station_table(labels: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _confirmed_layer2_table(layer2: pd.DataFrame) -> pd.DataFrame:
-    result = layer2.loc[layer2["sustained_offset"].fillna(False).astype(bool)].copy()
+def _confirmed_calibration_table(calibration_corroboration: pd.DataFrame) -> pd.DataFrame:
+    result = calibration_corroboration.loc[
+        calibration_corroboration["sustained_offset"].fillna(False).astype(bool)
+    ].copy()
     columns = [
         "station_id",
         "channel",
@@ -296,26 +284,28 @@ def _rain_summary(labels: pd.DataFrame) -> tuple[int, bool]:
 
 def _write_labels_and_optional_crosswalk(
     labels: pd.DataFrame,
+    label_path: Path,
+    crosswalk_path: Path,
 ) -> tuple[pd.DataFrame | None, dict[str, object] | None]:
-    LABELS_DIR.mkdir(parents=True, exist_ok=True)
-    labels.to_csv(LABEL_PATH, index=False)
+    label_path.parent.mkdir(parents=True, exist_ok=True)
+    labels.to_csv(label_path, index=False)
     if not FROZEN_LABELS_PATH.exists():
         return None, None
     frozen = pd.read_csv(FROZEN_LABELS_PATH)
     crosswalk = build_crosswalk(frozen, labels)
-    crosswalk.to_csv(CROSSWALK_PATH, index=False)
+    crosswalk.to_csv(crosswalk_path, index=False)
     return crosswalk, crosswalk_summary(frozen, labels, crosswalk)
 
 
-def _require_label_inputs() -> None:
+def _require_label_inputs(source: Path) -> None:
     require_files(
         "Label construction",
         {
-            "canonical merged dataset": MERGED_DATASET_PATH,
+            "canonical merged dataset": source,
             "external residual evidence": EXTERNAL_RESIDUALS_PATH,
             "spatial residual evidence": SPATIAL_RESIDUALS_PATH,
         },
-        "Run scripts/rebuild_detection_features.py after supplying its reference and five-minute inputs.",
+        "Run scripts/rebuild_detection_features.py after supplying its public reference and observation inputs.",
     )
 
 
@@ -362,12 +352,47 @@ def _prepare_scores(scores: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def main() -> None:
-    _require_label_inputs()
-    raw = pd.read_csv(MERGED_DATASET_PATH, parse_dates=["hour_utc"], low_memory=False)
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", type=Path, default=MERGED_DATASET_PATH)
+    parser.add_argument("--output-dir", type=Path, default=LABELS_DIR)
+    parser.add_argument("--frozen-statistics-dir", type=Path, default=None)
+    parser.add_argument("--contextual-unavailable-from", type=str, default=None)
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    source = args.source
+    output_dir = args.output_dir
+    label_path = output_dir / "episode_labels.csv"
+    crosswalk_path = output_dir / "label_crosswalk.csv"
+    statistical_review_path = output_dir / "statistical_anomaly_review.csv"
+    benign_review_path = output_dir / "benign_review_ranked.csv"
+    calibration_corroboration_path = output_dir / "calibration_offset_corroboration.csv"
+    frozen_statistics = (
+        load_frozen_rule_statistics(args.frozen_statistics_dir)
+        if args.frozen_statistics_dir is not None
+        else None
+    )
+    contextual_unavailable_from = (
+        pd.Timestamp(args.contextual_unavailable_from, tz="UTC")
+        if args.contextual_unavailable_from is not None
+        else None
+    )
+    _require_label_inputs(source)
+    raw = pd.read_csv(source, parse_dates=["hour_utc"], low_memory=False)
     raw["hour_utc"] = pd.to_datetime(raw["hour_utc"], utc=True)
     channels = numeric_channels(raw)
-    scores = _prepare_scores(compute_anomaly_scores(raw, channels=channels))
+    scores = _prepare_scores(
+        compute_anomaly_scores(
+            raw,
+            channels=channels,
+            frozen_baselines=None if frozen_statistics is None else frozen_statistics.baselines,
+            frozen_isolation_forests=None if frozen_statistics is None else frozen_statistics.isolation_forests,
+            frozen_thresholds=None if frozen_statistics is None else frozen_statistics.thresholds,
+        )
+    )
     events = build_events(scores)
     episodes = build_episodes(events)
     external_residuals = pd.read_parquet(EXTERNAL_RESIDUALS_PATH)
@@ -377,6 +402,8 @@ def main() -> None:
         scores,
         external_residuals,
         cohort,
+        frozen_thresholds=None if frozen_statistics is None else frozen_statistics.evidence_thresholds,
+        contextual_unavailable_from=contextual_unavailable_from,
     )
     labels = build_episode_labels(
         episodes,
@@ -390,13 +417,23 @@ def main() -> None:
         scores,
         external_residuals,
         cohort,
+        frozen_thresholds=None if frozen_statistics is None else frozen_statistics.evidence_thresholds,
+        contextual_unavailable_from=contextual_unavailable_from,
     )
     labels, initial_borderline = tag_borderline_review(
         labels,
         initial_benign_review,
     )
     spatial_residuals = pd.read_parquet(SPATIAL_RESIDUALS_PATH)
-    layer2 = build_layer2_calibration(external_residuals, spatial_residuals)
+    calibration_corroboration = build_calibration_corroboration(
+        external_residuals,
+        spatial_residuals,
+        frozen_metrics=(
+            None
+            if frozen_statistics is None
+            else frozen_statistics.calibration_corroboration_metrics
+        ),
+    )
     borderline_evidence = derive_borderline_evidence(
         labels,
         scores,
@@ -405,10 +442,13 @@ def main() -> None:
     labels, resolutions = resolve_borderline_labels(
         labels,
         borderline_evidence,
-        layer2,
+        calibration_corroboration,
     )
-    layer2 = attach_resolution_to_layer2(layer2, resolutions)
-    crosswalk, summary = _write_labels_and_optional_crosswalk(labels)
+    calibration_corroboration = attach_resolution_to_calibration_corroboration(
+        calibration_corroboration,
+        resolutions,
+    )
+    crosswalk, summary = _write_labels_and_optional_crosswalk(labels, label_path, crosswalk_path)
     statistical_review = build_statistical_review(labels, statistical_evidence)
     benign_review = build_benign_review(
         labels,
@@ -416,6 +456,8 @@ def main() -> None:
         scores,
         external_residuals,
         cohort,
+        frozen_thresholds=None if frozen_statistics is None else frozen_statistics.evidence_thresholds,
+        contextual_unavailable_from=contextual_unavailable_from,
     )
     period_summary = _period_fault_table(labels)
     label_state_summary = _label_state_table(labels)
@@ -433,7 +475,7 @@ def main() -> None:
     rain_episodes, rain_all_spike = _rain_summary(labels)
     inuqat9_path_b = _inuqat9_path_b_rows(statistical_review)
     threshold_location = _config_assignment_location("EXTERNAL_OFFSET_SCORE_HIGH")
-    confirmed_layer2 = _confirmed_layer2_table(layer2)
+    confirmed_calibration = _confirmed_calibration_table(calibration_corroboration)
     remaining_borderline = _borderline_station_table(labels)
     initial_borderline_ids = set(initial_borderline["episode_id"].astype(str))
     resolved_ids = set(resolutions["episode_id"].astype(str)) if not resolutions.empty else set()
@@ -444,9 +486,9 @@ def main() -> None:
             & labels["components"].fillna("").str.split("|").map(lambda values: "light_uv" in values),
         ].shape[0],
     )
-    statistical_review.to_csv(STATISTICAL_REVIEW_PATH, index=False)
-    benign_review.to_csv(BENIGN_REVIEW_PATH, index=False)
-    layer2.to_csv(LAYER2_PATH, index=False)
+    statistical_review.to_csv(statistical_review_path, index=False)
+    benign_review.to_csv(benign_review_path, index=False)
+    calibration_corroboration.to_csv(calibration_corroboration_path, index=False)
 
     print("LABEL PREVIEW")
     print(f"hourly_rows={len(raw)}")
@@ -462,8 +504,8 @@ def main() -> None:
     print(mechanism_summary.to_string(index=False))
     print("component_counts_by_period=")
     print(component_summary.to_string(index=False))
-    print("layer2_confirmed_calibration_offsets=")
-    print(confirmed_layer2.to_string(index=False))
+    print("confirmed_calibration_offsets=")
+    print(confirmed_calibration.to_string(index=False))
     print("borderline_resolution=")
     print(f"initial_borderline_review={len(initial_borderline_ids)}")
     print(f"calibration_eligible_borderline={len(calibration_eligible_ids)}")
@@ -506,17 +548,17 @@ def main() -> None:
         print(_format_rates(family_summary, ["pair_agreement_rate", "frozen_agreement_rate"]).to_string(index=False))
         print("crosswalk_disagreements=")
         print(_disagreement_table(crosswalk).to_string(index=False))
-    print(f"labels_path={LABEL_PATH}")
+    print(f"labels_path={label_path}")
     print(f"preview_rows={len(labels)}")
     if crosswalk is not None:
-        print(f"crosswalk_path={CROSSWALK_PATH}")
+        print(f"crosswalk_path={crosswalk_path}")
         print(f"crosswalk_rows={len(crosswalk)}")
-    print(f"statistical_review_path={STATISTICAL_REVIEW_PATH}")
+    print(f"statistical_review_path={statistical_review_path}")
     print(f"statistical_review_rows={len(statistical_review)}")
-    print(f"benign_review_path={BENIGN_REVIEW_PATH}")
+    print(f"benign_review_path={benign_review_path}")
     print(f"benign_review_rows={len(benign_review)}")
-    print(f"layer2_path={LAYER2_PATH}")
-    print(f"layer2_rows={len(layer2)}")
+    print(f"calibration_corroboration_path={calibration_corroboration_path}")
+    print(f"calibration_corroboration_rows={len(calibration_corroboration)}")
 
 
 if __name__ == "__main__":

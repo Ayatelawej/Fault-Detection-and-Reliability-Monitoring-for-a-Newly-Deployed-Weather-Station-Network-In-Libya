@@ -1,0 +1,3 @@
+model,threshold,rows,fault_support,not_fault_support,precision,recall,f1,accuracy,auroc,auprc,tp,fp,fn,tn,selected_by_development_validation
+HGB,0.30,13565,1701,11864,0.735757,0.797178,0.765237,0.938666,0.981134,0.881887,1356,487,345,11377,False
+EF-HGB,0.30,13565,1701,11864,0.742499,0.800118,0.770232,0.940140,0.981692,0.886109,1361,472,340,11392,True

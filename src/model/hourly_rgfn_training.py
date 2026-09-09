@@ -1143,8 +1143,8 @@ def prepare_hourly_rgfn_split(
     if set(splits) != required:
         raise ValueError("hourly RGFN requires train, validation, and test partitions")
     x_cont = np.asarray(examples["X_cont"])
-    if x_cont.ndim != 3 or x_cont.shape[1] != 7:
-        raise ValueError("hourly RGFN requires a seven-hour input tensor")
+    if x_cont.ndim != 3 or x_cont.shape[1] < 1:
+        raise ValueError("hourly RGFN requires a positive-length hourly input tensor")
     labels = np.asarray(examples["y_binary"], dtype=int)
     scaler = HourlyRgfnScaler.fit(examples, np.asarray(splits["train"], dtype=np.int64))
     values = scaler.transform(examples)

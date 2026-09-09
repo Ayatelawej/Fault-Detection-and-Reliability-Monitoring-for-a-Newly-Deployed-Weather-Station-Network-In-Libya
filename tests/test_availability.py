@@ -1342,7 +1342,7 @@ def test_operational_scorecard_default_skips_terminal_padding_and_is_delete_futu
         registry,
         availability=None,
         forecast_models=_persistence_forecast_models(),
-        layer2=None,
+        calibration_corroboration=None,
         reference_hour=expected,
         expected_station_count=3,
     )
@@ -1484,7 +1484,7 @@ def _synthetic_replay_bundle() -> ReplayBundle:
     )
 
 
-def test_july_replay_snapshot_preserves_stations_and_uses_selected_hgb_output() -> None:
+def test_july_replay_snapshot_preserves_stations_and_uses_selected_detector_output() -> None:
     bundle = _synthetic_replay_bundle()
     snapshot = build_replay_snapshot(bundle, "2026-07-01T01:00:00Z")
 

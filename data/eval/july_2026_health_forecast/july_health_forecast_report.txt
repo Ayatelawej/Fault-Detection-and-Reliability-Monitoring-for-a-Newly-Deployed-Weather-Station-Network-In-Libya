@@ -1,0 +1,34 @@
+JULY 2026 FROZEN HEALTH-FORECAST EVALUATION
+
+frozen pre-July transmitting-origin policies evaluated on July origins with targets remaining inside July; no training, refitting, model selection, calibration, or threshold selection
+
+FROZEN SELECTED POLICY
+ horizon_h  rows      mae     rmse       r2  within_1_point_accuracy  within_5_point_accuracy  within_10_point_accuracy  health_band_accuracy  mae_improvement_vs_persistence_pct  mae_improvement_vs_roll_forward_pct
+         1 13799 1.377773 2.390826 0.972572                 0.529024                 0.975868                  0.996884              0.939561                            7.106586                             4.785025
+         3 13781 2.913912 4.313883 0.912110                 0.288949                 0.817357                  0.978739              0.875916                            2.849951                             7.091202
+         6 13719 4.496120 6.766570 0.791577                 0.197536                 0.696625                  0.895692              0.815293                           -1.156155                             7.851642
+        12 13603 5.112200 7.398502 0.762889                 0.131589                 0.634051                  0.880321              0.771595                           15.031688                            27.024116
+        24 13378 6.619487 9.598001 0.631240                 0.102482                 0.507101                  0.830318              0.722604                            8.447213                            27.734450
+
+ALL METHODS
+ horizon_h                       method  rows       mae      rmse        r2  within_5_point_accuracy  health_band_accuracy
+         1       frozen_selected_policy 13799  1.377773  2.390826  0.972572                 0.975868              0.939561
+         1                  persistence 13799  1.483177  2.451274  0.971167                 0.972534              0.933401
+         1             recent_trend_24h 13799  1.606719  2.596217  0.967657                 0.967606              0.926879
+         1 no_new_incident_roll_forward 13799  1.447013  2.509966  0.969770                 0.968114              0.937242
+         3       frozen_selected_policy 13781  2.913912  4.313883  0.912110                 0.817357              0.875916
+         3                  persistence 13781  2.999394  4.474471  0.905444                 0.818010              0.866918
+         3             recent_trend_24h 13781  3.470402  5.145351  0.874964                 0.770263              0.841739
+         3 no_new_incident_roll_forward 13781  3.136315  4.921443  0.885610                 0.791379              0.855163
+         6       frozen_selected_policy 13719  4.496120  6.766570  0.791577                 0.696625              0.815293
+         6                  persistence 13719  4.444732  6.371163  0.815224                 0.671113              0.799621
+         6             recent_trend_24h 13719  5.518650  8.037038  0.705964                 0.591370              0.749107
+         6 no_new_incident_roll_forward 13719  4.879219  7.320094  0.756083                 0.654785              0.774400
+        12       frozen_selected_policy 13603  5.112200  7.398502  0.762889                 0.634051              0.771595
+        12                  persistence 13603  6.016596  8.603269  0.679379                 0.555833              0.735279
+        12             recent_trend_24h 13603  8.081536 11.920662  0.384447                 0.473204              0.657796
+        12 no_new_incident_roll_forward 13603  7.005329 10.152625  0.553500                 0.527678              0.697640
+        24       frozen_selected_policy 13378  6.619487  9.598001  0.631240                 0.507101              0.722604
+        24                  persistence 13378  7.230241 10.645545  0.546353                 0.495216              0.697638
+        24             recent_trend_24h 13378 11.982387 16.850905 -0.136656                 0.333009              0.522201
+        24 no_new_incident_roll_forward 13378  9.159948 13.023483  0.321052                 0.422858              0.634400

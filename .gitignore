@@ -1,25 +1,16 @@
 .venv/
 __pycache__/
 *.pyc
-archive/
 .env
 .cache/
-# Keep the published historical reference cache, but ignore fresh local caches
-# and separately supplied five-minute inputs.
-data/external/*
-!data/external/.gitkeep
-!data/external/openmeteo/
-!data/external/openmeteo/**
-data/discovery/
+data/external/
+data/staging/
 data/features/
 data/model/
 data/hourly_detection/
-# Only the active outage-risk evaluation evidence is published.
-data/eval/*
-!data/eval/outage_risk_event_metrics.csv
-!data/eval/outage_risk_hour_metrics.csv
-!data/eval/outage_risk_predictions.parquet
+data/eval/
 /outputs/figures/health_forecast_long_horizon_*.png
+data/discovery/raw/
 .ipynb_checkpoints/
 .DS_Store
 Thumbs.db
@@ -33,10 +24,22 @@ data/processed/cluster_label_map.csv
 data/labels/*
 !data/labels/.gitkeep
 !data/labels/episode_labels.csv
-!data/labels/calibration_offset_layer2.csv
+!data/labels/calibration_offset_corroboration.csv
 data/labels/benign_resolution_log.csv
 docs/report_drafts/
 outputs/exports/
 outputs/eda/
 *.docx
+!docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes_finalized.docx
+docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes.docx
+docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes_final.docx
 *.zip
+outputs/report_revision/
+
+# Personal learning and study artifacts
+/docs/STUDY_GUIDE.md
+/docs/CODE_INVENTORY.md
+/docs/DEMO_GUIDE.md
+/docs/data_audit.md
+/docs/availability_engine.md
+/private_notes/

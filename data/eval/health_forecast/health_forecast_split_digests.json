@@ -1,0 +1,97 @@
+{
+  "1": {
+    "metadata": {
+      "horizon_h": 1,
+      "label_span_hours": 1,
+      "purged_before_test_rows": 26,
+      "purged_before_validation_rows": 26,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-05T22:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-10T21:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-05T21:00:00+00:00",
+      "validation_start_utc": "2026-03-10T22:00:00+00:00"
+    },
+    "purged": "8c6da87f6314d14b1929eab0f8473c8c628a683f866899c48481b988258d86fa",
+    "test": "dbb84e4d225e6304604a4d3b7a5c5150ea67c4ec816f832617e362f75bb0be2e",
+    "train": "8f1ab01da0a061f41df68902ee43d45db1438aefb46664892cd74193538ec635",
+    "validation": "97640705aee855115112b5b9a129e9f5c42c01861c2a5222d6ee46ab684ebed9"
+  },
+  "12": {
+    "metadata": {
+      "horizon_h": 12,
+      "label_span_hours": 12,
+      "purged_before_test_rows": 312,
+      "purged_before_validation_rows": 312,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-05T13:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-10T03:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-05T01:00:00+00:00",
+      "validation_start_utc": "2026-03-10T15:00:00+00:00"
+    },
+    "purged": "fd76e2c6dcfa2717d526db5b6ddabf715d32a9cf164f6741034e35b3b174c84c",
+    "test": "cbecb0402fe54762ab25ad91986ac769d0b09af510e7ed7dd45ddc97f369fb55",
+    "train": "1b8d828b503cf80b0a8bdeb2e9d3337c157b055d9b0b24c76ee9b879cc0e2397",
+    "validation": "2b019a8c13662c030263dde942f356ae9b9bccfb752824100cbfdc96865a29c2"
+  },
+  "24": {
+    "metadata": {
+      "horizon_h": 24,
+      "label_span_hours": 24,
+      "purged_before_test_rows": 624,
+      "purged_before_validation_rows": 624,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-05T02:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-09T06:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-04T02:00:00+00:00",
+      "validation_start_utc": "2026-03-10T06:00:00+00:00"
+    },
+    "purged": "534796dc965eab33d81a579f8e53a13bb5ab9403c9bfb830e6a50906910d5f0d",
+    "test": "0be2c47e27e3e685a28fda679ff740b72fe9b7631f4d101ccf7f62e794d92edc",
+    "train": "88c7915c77dd34643a6db4249cc9bfe1f2c8ff6a7513e17be3f4482ab558788f",
+    "validation": "ecd1bdee443d3461c1c98b4a51016e2b399995da0efec0329d5c78dbac871345"
+  },
+  "3": {
+    "metadata": {
+      "horizon_h": 3,
+      "label_span_hours": 3,
+      "purged_before_test_rows": 78,
+      "purged_before_validation_rows": 78,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-05T20:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-10T18:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-05T17:00:00+00:00",
+      "validation_start_utc": "2026-03-10T21:00:00+00:00"
+    },
+    "purged": "2ec56ea2b0235abfab9aedb02d0f2e15d69e9718f41f8c5fd685ac5f7e4743e9",
+    "test": "0865d08e11f0e52400145f4a2f5b1e71b512cbead17123782c215322c55e1b22",
+    "train": "6f317ab6491aa49ef2151c2cf5f85a8a94cdbbeb6e6753761514fe12c610ff21",
+    "validation": "eafd6328b855af14778138033b441256abfae3016d27e70f8687d12297c4b82a"
+  },
+  "6": {
+    "metadata": {
+      "horizon_h": 6,
+      "label_span_hours": 6,
+      "purged_before_test_rows": 156,
+      "purged_before_validation_rows": 156,
+      "test_fraction": 0.15000000000000005,
+      "test_start_utc": "2026-05-05T18:00:00+00:00",
+      "train_fraction": 0.7,
+      "train_purge_start_utc": "2026-03-10T13:00:00+00:00",
+      "validation_fraction": 0.15,
+      "validation_purge_start_utc": "2026-05-05T12:00:00+00:00",
+      "validation_start_utc": "2026-03-10T19:00:00+00:00"
+    },
+    "purged": "f7457d92ba1ec7d085374860bf304a52ffff055961fa9e2b22a7df1e5b04be5a",
+    "test": "e45d3a0d0356fd51d8b20616a6f29b39432a35e1bbc79e880d2e155c25789e03",
+    "train": "1110988f1b5cd582b6b15cf127b8d6cb3b738c44ec7e9a64ddfe5dca3138e7a6",
+    "validation": "3f0295f3b10f4662422527b070493900865191d44a27650a1f35a683fb3b65f5"
+  }
+}

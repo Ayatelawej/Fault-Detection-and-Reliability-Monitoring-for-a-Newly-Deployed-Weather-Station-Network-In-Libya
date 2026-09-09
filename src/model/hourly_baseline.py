@@ -68,6 +68,30 @@ class HourlyBaselineConfig:
     l2_regularization: float = 1.0
 
 
+@dataclass
+class EvidenceFusedHgbClassifier:
+    full_estimator: object
+    context_estimator: object
+    rule_estimator: object
+    context_indices: np.ndarray
+    rule_indices: np.ndarray
+    full_weight: float
+    context_weight: float
+    rule_weight: float
+
+    def predict_proba(self, values: np.ndarray) -> np.ndarray:
+        matrix = np.asarray(values)
+        full = self.full_estimator.predict_proba(matrix)[:, 1]
+        context = self.context_estimator.predict_proba(matrix[:, self.context_indices])[:, 1]
+        rules = self.rule_estimator.predict_proba(matrix[:, self.rule_indices])[:, 1]
+        probability = (
+            float(self.full_weight) * full
+            + float(self.context_weight) * context
+            + float(self.rule_weight) * rules
+        )
+        return np.column_stack([1.0 - probability, probability])
+
+
 @dataclass(frozen=True)
 class HourlyReasonCodeConfig:
     seed: int = 2026
@@ -2951,7 +2975,7 @@ def make_split_manifest(
 
 
 def save_model_bundle(
-    model: HistGradientBoostingClassifier,
+    model: object,
     path: Path,
     feature_names: list[str],
     window_hours: int,
@@ -2959,6 +2983,7 @@ def save_model_bundle(
     split_name: str,
     split_configuration: str = "70_15_15",
     split_fractions: dict[str, float] | None = None,
+    extra_metadata: dict[str, object] | None = None,
 ) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -2972,6 +2997,8 @@ def save_model_bundle(
         "split_fractions": dict(SPLIT_FRACTIONS if split_fractions is None else split_fractions),
         "class_weight": {0: 1.0, 1: float(config.fault_class_weight)},
     }
+    if extra_metadata:
+        bundle.update(extra_metadata)
     joblib.dump(bundle, destination)
     return destination
 

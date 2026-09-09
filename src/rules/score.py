@@ -14,7 +14,7 @@ from src.rules.config import (
     STUCK_IGNORE_ZERO_CHANNELS,
     STUCK_SKIP_CHANNELS,
 )
-from src.rules.detectors.isolation_forest import score_isolation_forest
+from src.rules.detectors.isolation_forest import fit_isolation_forest, score_isolation_forest
 from src.rules.detectors.robust_zscore import score_robust_zscore
 from src.rules.detectors.rolling_variance import detect_stuck_values
 from src.rules.physical_limits import (
@@ -92,9 +92,17 @@ def _scored_channel_specs(channels: list[str]) -> list[tuple[str, str]]:
     return scored_channels
 
 
-def _threshold_flags(values: pd.Series, percentile: float, absolute: bool) -> pd.Series:
+def _threshold_flags(
+    values: pd.Series,
+    percentile: float,
+    absolute: bool,
+    frozen_threshold: float | None = None,
+) -> pd.Series:
     score_values = values.abs() if absolute else values
     present_scores = score_values.dropna()
+
+    if frozen_threshold is not None:
+        return score_values.ge(frozen_threshold).fillna(False)
 
     if present_scores.empty:
         return pd.Series(False, index=values.index)
@@ -125,21 +133,35 @@ def compute_anomaly_scores(
     channels: list[str],
     flag_percentile: float = ROBUST_ZSCORE_FLAG_PERCENTILE,
     random_state: int = 42,
+    frozen_baselines: dict[tuple[str, str], dict[str, object]] | None = None,
+    frozen_isolation_forests: dict[tuple[str, str], object] | None = None,
+    frozen_thresholds: dict[tuple[str, str], float] | None = None,
+    collect_statistics: dict[str, dict] | None = None,
 ) -> pd.DataFrame:
     scored_wide = _build_scored_wide_frame(df, channels)
     scored_channels = _scored_channel_specs(channels)
     result_frames: list[pd.DataFrame] = []
+    collected_baselines: dict[tuple[str, str], dict[str, object]] = {}
+    collected_isolation_forests: dict[tuple[str, str], object] = {}
 
     for original_channel, channel in scored_channels:
         for station_id, station_frame in scored_wide.groupby("station_id", sort=False):
             station_frame = station_frame.sort_values("hour_utc")
             series = station_frame[channel].astype(float)
+            frozen_baseline = (
+                frozen_baselines.get((str(station_id), channel))
+                if frozen_baselines is not None
+                else None
+            )
             baseline = select_baseline(
                 scored_wide,
                 station_id=str(station_id),
                 channel=channel,
                 min_present_hours=COVERAGE_FLOOR_HOURS,
+                frozen_baseline=frozen_baseline,
             )
+            if collect_statistics is not None:
+                collected_baselines[(str(station_id), channel)] = baseline
             zscore = score_robust_zscore(series, baseline=baseline)["score"]
             if original_channel in STUCK_SKIP_CHANNELS:
                 stuck = pd.DataFrame(
@@ -162,10 +184,22 @@ def compute_anomaly_scores(
                 df.loc[station_frame.index, original_channel],
                 original_channel,
             )
+            fitted_estimator = (
+                frozen_isolation_forests.get((str(station_id), channel))
+                if frozen_isolation_forests is not None
+                else None
+            )
             iforest_score = score_isolation_forest(
                 series,
                 random_state=random_state,
+                fitted_estimator=fitted_estimator,
             )
+            if collect_statistics is not None:
+                collected_isolation_forests[(str(station_id), channel)] = (
+                    fitted_estimator
+                    if fitted_estimator is not None
+                    else fit_isolation_forest(series, random_state=random_state)
+                )
 
             result_frames.append(
                 pd.DataFrame(
@@ -186,24 +220,59 @@ def compute_anomaly_scores(
             )
 
     if not result_frames:
+        if collect_statistics is not None:
+            collect_statistics["baselines"] = collected_baselines
+            collect_statistics["isolation_forests"] = collected_isolation_forests
+            collect_statistics["thresholds"] = {}
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
     result = pd.concat(result_frames, ignore_index=True)
     result["flag_zscore"] = False
     result["flag_iforest"] = False
+    collected_thresholds: dict[tuple[str, str], float] = {}
 
     for channel, channel_index in result.groupby("channel", sort=False).groups.items():
         channel_rows = result.loc[channel_index]
+        zscore_threshold = (
+            frozen_thresholds.get((str(channel), "zscore"))
+            if frozen_thresholds is not None
+            else None
+        )
+        iforest_threshold = (
+            frozen_thresholds.get((str(channel), "iforest"))
+            if frozen_thresholds is not None
+            else None
+        )
         result.loc[channel_index, "flag_zscore"] = _threshold_flags(
             channel_rows["zscore"],
             flag_percentile,
             absolute=True,
+            frozen_threshold=zscore_threshold,
         ).to_numpy(dtype=bool)
         result.loc[channel_index, "flag_iforest"] = _threshold_flags(
             channel_rows["iforest_score"],
             flag_percentile,
             absolute=False,
+            frozen_threshold=iforest_threshold,
         ).to_numpy(dtype=bool)
+        if collect_statistics is not None:
+            present_zscore = channel_rows["zscore"].abs().dropna()
+            present_iforest = channel_rows["iforest_score"].dropna()
+            collected_thresholds[(str(channel), "zscore")] = (
+                float(np.nanpercentile(present_zscore.to_numpy(dtype=float), flag_percentile))
+                if not present_zscore.empty
+                else float("nan")
+            )
+            collected_thresholds[(str(channel), "iforest")] = (
+                float(np.nanpercentile(present_iforest.to_numpy(dtype=float), flag_percentile))
+                if not present_iforest.empty
+                else float("nan")
+            )
+
+    if collect_statistics is not None:
+        collect_statistics["baselines"] = collected_baselines
+        collect_statistics["isolation_forests"] = collected_isolation_forests
+        collect_statistics["thresholds"] = collected_thresholds
 
     result["flag"] = (
         result["flag_zscore"].astype(bool)

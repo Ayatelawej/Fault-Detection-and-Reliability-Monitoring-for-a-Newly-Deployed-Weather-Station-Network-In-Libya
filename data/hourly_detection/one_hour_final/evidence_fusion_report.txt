@@ -1,0 +1,15 @@
+ONE-HOUR EVIDENCE-FUSED HGB
+
+The full, context, and rule HGB branches use the same training partition.
+Fusion weights and the operating threshold are selected from validation only.
+Test is evaluated once after the fusion is frozen.
+
+ model  split  validation_precision  validation_recall  validation_f1  validation_accuracy  test_precision  test_recall  test_f1  test_accuracy  selected_by_validation
+EF-HGB random              0.924406           0.924406       0.924406             0.989249        0.914651     0.925846 0.920215       0.988583                    True
+   HGB random              0.923576           0.922246       0.922911             0.989044        0.913940     0.925126 0.919499       0.988481                   False
+EF-HGB spaced              0.908120           0.910064       0.909091             0.986956        0.914001     0.914001 0.914001       0.987620                    True
+   HGB spaced              0.906845           0.917202       0.911994             0.987314        0.902996     0.899787 0.901388       0.985829                   False
+
+VALIDATION-SELECTED FUSION
+random: full=0.9, context=0.0, rules=0.1, threshold=0.30
+spaced: full=0.0, context=0.2, rules=0.8, threshold=0.80

@@ -4,7 +4,9 @@ import pandas as pd
 import pytest
 
 from src.config.paths import (
+    CANONICAL_COLUMN_ORDER,
     DATA_AUDIT_SUMMARY_PATH,
+    EXPECTED_FROZEN_N_COLS,
     EXPECTED_FROZEN_N_ROWS,
     EXPECTED_STATION_COUNT,
     FIGURES_DIR,
@@ -71,6 +73,53 @@ def test_row_state_module_imports() -> None:
 
     assert callable(classify_row_states)
     assert WARMUP_DAYS == 7
+
+
+def test_frozen_shape_and_schema(merged_df: pd.DataFrame) -> None:
+    assert merged_df.shape == (
+        EXPECTED_FROZEN_N_ROWS,
+        EXPECTED_FROZEN_N_COLS,
+    )
+    assert list(merged_df.columns) == CANONICAL_COLUMN_ORDER
+
+
+def test_station_hour_key_is_unique(merged_df: pd.DataFrame) -> None:
+    assert not merged_df.duplicated(
+        subset=["station_id", "hour_utc"],
+    ).any()
+    assert merged_df["station_id"].nunique() == EXPECTED_STATION_COUNT
+
+
+def test_hour_utc_is_parseable_and_utc(merged_df: pd.DataFrame) -> None:
+    parsed = pd.to_datetime(
+        merged_df["hour_utc"],
+        utc=True,
+        errors="raise",
+    )
+    assert parsed.notna().all()
+    assert merged_df["hour_utc"].str.endswith("+00:00").all()
+
+
+def test_utc_columns_are_consistent(merged_df: pd.DataFrame) -> None:
+    assert (merged_df["hour_utc"] == merged_df["timestamp_utc_dt"]).all()
+
+    hour_utc_without_offset = (
+        pd.to_datetime(merged_df["hour_utc"], utc=True)
+        .dt.tz_convert("UTC")
+        .dt.strftime("%Y-%m-%d %H:%M:%S")
+    )
+    assert (hour_utc_without_offset == merged_df["timestamp_utc"]).all()
+
+
+def test_data_present_is_binary(merged_df: pd.DataFrame) -> None:
+    assert set(merged_df["data_present"].dropna().unique()) <= {0, 1}
+
+
+def test_timestamp_local_exists_for_live_rows(
+    merged_df: pd.DataFrame,
+) -> None:
+    live_rows = merged_df["data_present"] == 1
+    assert merged_df.loc[live_rows, "timestamp_local"].notna().all()
 
 
 def test_row_state_classification_on_full_dataset(

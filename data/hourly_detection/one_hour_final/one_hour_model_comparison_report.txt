@@ -1,0 +1,20 @@
+ONE-HOUR HGB AND RGFN COMPARISON
+
+Both models use the same current-hour engineered input population and exact split manifest.
+RGFN uses an MLP sensor encoder and retains its independent evidence branch and learned reliability gate.
+Class weights and thresholds are selected from validation only. Test metrics do not enter model selection.
+
+FULL COMPARISON
+model  split  validation_precision  validation_recall  validation_f1  validation_accuracy  test_precision  test_recall  test_f1  test_accuracy
+  HGB random              0.923576           0.922246       0.922911             0.989044        0.913940     0.925126 0.919499       0.988481
+ RGFN random              0.896587           0.898056       0.897048             0.985317        0.897358     0.893880 0.895395       0.985133
+  HGB spaced              0.906845           0.917202       0.911994             0.987314        0.902996     0.899787 0.901388       0.985829
+ RGFN spaced              0.884058           0.888223       0.885246             0.983447        0.890910     0.911585 0.900356       0.985440
+
+VALIDATION-ONLY MODEL SELECTION
+random: HGB (validation minimum=0.922246, F1=0.922911)
+spaced: HGB (validation minimum=0.906845, F1=0.911994)
+
+RGFN SELECTED OPERATING POINTS
+random: class_weight=4.0, threshold=0.65, seeds=5
+spaced: class_weight=2.0, threshold=0.50, seeds=5

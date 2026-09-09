@@ -931,6 +931,40 @@ class TestIsolationForestContract:
 
         pd.testing.assert_series_equal(first, second)
 
+    def test_fitted_estimator_is_used_instead_of_fitting_a_new_one(self) -> None:
+        from src.rules.detectors.isolation_forest import (
+            fit_isolation_forest,
+            score_isolation_forest,
+        )
+
+        series = pd.Series(
+            np.r_[np.linspace(-1.0, 1.0, 12), np.linspace(8.0, 10.0, 12), 40.0],
+        )
+        fitted = fit_isolation_forest(series, contamination=0.08, random_state=123)
+
+        via_fitted_estimator = score_isolation_forest(
+            series,
+            contamination=0.08,
+            random_state=999,
+            fitted_estimator=fitted,
+        )
+        via_fresh_fit_matching_state = score_isolation_forest(
+            series,
+            contamination=0.08,
+            random_state=123,
+        )
+
+        pd.testing.assert_series_equal(via_fitted_estimator, via_fresh_fit_matching_state)
+
+    def test_fit_isolation_forest_returns_none_when_series_is_entirely_absent(
+        self,
+    ) -> None:
+        from src.rules.detectors.isolation_forest import fit_isolation_forest
+
+        series = pd.Series([np.nan, np.nan, np.nan])
+
+        assert fit_isolation_forest(series) is None
+
 
 class TestBaselineContract:
     def test_station_with_enough_present_hours_uses_own_baseline(self) -> None:
@@ -960,6 +994,27 @@ class TestBaselineContract:
 
         assert _baseline_source(result) == "network_pooled"
         assert _baseline_value(result) == pytest.approx(20.0)
+
+    def test_frozen_baseline_is_returned_unchanged_without_touching_frame(
+        self,
+    ) -> None:
+        from src.rules.baselines import select_baseline
+
+        frozen_baseline = {
+            "source": "station",
+            "baseline_value": 99.0,
+            "baseline_spread": 1.0,
+            "n_present": 2_000,
+        }
+
+        result = select_baseline(
+            pd.DataFrame(columns=["station_id", "airtemp_avg_c"]),
+            station_id="OWN",
+            channel="airtemp_avg_c",
+            frozen_baseline=frozen_baseline,
+        )
+
+        assert result is frozen_baseline
 
 
 class TestChannelHandlersContract:
@@ -1168,6 +1223,115 @@ class TestScoreOrchestratorIntegration:
             "stuck_variance_zero",
             regex=False,
         ).any()
+
+    def test_compute_anomaly_scores_collects_statistics_matching_default_output(
+        self,
+    ) -> None:
+        from src.rules.score import compute_anomaly_scores
+
+        frame = _score_input_frame()
+        collected: dict[str, dict] = {}
+        default_result = compute_anomaly_scores(
+            frame,
+            SCORE_CHANNELS,
+            flag_percentile=ROBUST_ZSCORE_FLAG_PERCENTILE,
+            random_state=42,
+            collect_statistics=collected,
+        )
+
+        assert set(collected) == {"baselines", "isolation_forests", "thresholds"}
+        assert collected["baselines"]
+        assert collected["isolation_forests"]
+        assert collected["thresholds"]
+        assert ("STA_NORMAL", "temp_avg_c") in collected["baselines"]
+        assert ("temp_avg_c", "zscore") in collected["thresholds"]
+        assert ("temp_avg_c", "iforest") in collected["thresholds"]
+
+        frozen_result = compute_anomaly_scores(
+            frame,
+            SCORE_CHANNELS,
+            flag_percentile=ROBUST_ZSCORE_FLAG_PERCENTILE,
+            random_state=42,
+            frozen_baselines=collected["baselines"],
+            frozen_isolation_forests=collected["isolation_forests"],
+            frozen_thresholds=collected["thresholds"],
+        )
+
+        pd.testing.assert_frame_equal(
+            default_result.reset_index(drop=True),
+            frozen_result.reset_index(drop=True),
+        )
+
+
+class TestFrozenRuleStatisticsRoundTrip:
+    def test_fit_save_load_reproduces_default_scores(self, tmp_path) -> None:
+        from src.rules.frozen_statistics import (
+            fit_frozen_rule_statistics,
+            load_frozen_rule_statistics,
+            save_frozen_rule_statistics,
+            sha256_file,
+        )
+        from src.rules.score import compute_anomaly_scores
+
+        frame = _score_input_frame()
+        source_path = tmp_path / "station_hourly_merged.csv"
+        frame.to_csv(source_path, index=False)
+
+        external_residuals_path = tmp_path / "external_residuals.parquet"
+        pd.DataFrame(
+            {
+                "station_id": ["STA_NORMAL"],
+                "time_utc": [pd.Timestamp("2024-04-01", tz="UTC")],
+                "r_pressure": [0.0],
+                "z_pressure": [0.0],
+                "r_temp": [0.0],
+                "z_temp": [0.0],
+                "r_dewpoint": [0.0],
+                "z_dewpoint": [0.0],
+            },
+        ).to_parquet(external_residuals_path)
+
+        statistics = fit_frozen_rule_statistics(source_path, external_residuals_path)
+
+        assert statistics.source_sha256 == sha256_file(source_path)
+        assert statistics.source_rows == len(frame)
+        assert ("STA_NORMAL", "temp_avg_c") in statistics.baselines
+        assert ("temp_avg_c", "zscore") in statistics.thresholds
+        assert ("temp_avg_c", "zscore") in statistics.evidence_thresholds
+        assert ("temp_avg_c", "iforest") in statistics.evidence_thresholds
+        assert (
+            "STA_NORMAL",
+            "pressure",
+        ) in statistics.calibration_corroboration_metrics
+
+        from src.rules.statistical_gate import detector_thresholds
+
+        default_result = compute_anomaly_scores(frame, SCORE_CHANNELS, random_state=42)
+        expected_evidence = detector_thresholds(default_result)
+        expected_temp_row = expected_evidence.loc[expected_evidence["channel"] == "temp_avg_c"].iloc[0]
+        assert statistics.evidence_thresholds[("temp_avg_c", "iforest")] == pytest.approx(
+            expected_temp_row["iforest_threshold"],
+        )
+
+        output_dir = tmp_path / "frozen"
+        destination = save_frozen_rule_statistics(statistics, output_dir)
+        assert destination.exists()
+
+        loaded = load_frozen_rule_statistics(output_dir)
+
+        loaded_result = compute_anomaly_scores(
+            frame,
+            SCORE_CHANNELS,
+            random_state=42,
+            frozen_baselines=loaded.baselines,
+            frozen_isolation_forests=loaded.isolation_forests,
+            frozen_thresholds=loaded.thresholds,
+        )
+
+        pd.testing.assert_frame_equal(
+            default_result.reset_index(drop=True),
+            loaded_result.reset_index(drop=True),
+        )
 
 
 class TestEventBuilderIntegration:

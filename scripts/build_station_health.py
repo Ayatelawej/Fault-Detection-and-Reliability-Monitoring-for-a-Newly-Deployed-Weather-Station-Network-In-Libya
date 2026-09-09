@@ -70,7 +70,9 @@ from src.config.paths import (
 from src.rules.config import EXTERNAL_CACHE_DIR
 from src.workflows.prerequisites import require_files
 
-LABEL_LAYER2_PATH = PROJECT_ROOT / "data" / "labels" / "calibration_offset_layer2.csv"
+CALIBRATION_CORROBORATION_PATH = (
+    PROJECT_ROOT / "data" / "labels" / "calibration_offset_corroboration.csv"
+)
 
 
 def parse_args(argv: list[str] | None = None) -> Namespace:
@@ -383,7 +385,7 @@ def _scorecard_input_hashes(args: Namespace) -> dict[str, str]:
         "station_health_scores": args.scores_output,
         "availability_classification": args.availability_classification,
         "live_episode_labels": PROJECT_ROOT / "data" / "labels" / "episode_labels.csv",
-        "layer2_calibration_evidence": LABEL_LAYER2_PATH,
+        "calibration_corroboration_evidence": CALIBRATION_CORROBORATION_PATH,
         "hourly_short_tensor": hourly_directory / "hourly_detection_short.npz",
         "binary_metrics": hourly_directory / "hourly_short_calibration_metrics.json",
         "reason_code_metrics": hourly_directory / "reason_code_method_comparison_metrics.json",
@@ -414,7 +416,7 @@ def _run_scorecard(args: Namespace) -> None:
             "causal station-health scores": args.scores_output,
             "station registry": args.station_registry,
             "availability classification": args.availability_classification,
-            "Layer 2 calibration evidence": LABEL_LAYER2_PATH,
+            "calibration corroboration evidence": CALIBRATION_CORROBORATION_PATH,
             **model_paths,
         },
         "Run station health and the five-horizon health forecast before assembling the scorecard.",
@@ -423,14 +425,14 @@ def _run_scorecard(args: Namespace) -> None:
     scores = pd.read_parquet(args.scores_output)
     registry = pd.read_csv(args.station_registry)
     availability = pd.read_parquet(args.availability_classification)
-    layer2 = pd.read_csv(LABEL_LAYER2_PATH)
+    calibration_corroboration = pd.read_csv(CALIBRATION_CORROBORATION_PATH)
     models = load_health_forecast_models(args.forecast_model_dir)
     run = build_operational_scorecard(
         scores,
         registry,
         availability=availability,
         forecast_models=models,
-        layer2=layer2,
+        calibration_corroboration=calibration_corroboration,
         reference_hour=args.reference_hour,
     )
     causality = validate_delete_future_operational_scorecard(
@@ -438,7 +440,7 @@ def _run_scorecard(args: Namespace) -> None:
         registry,
         availability=availability,
         forecast_models=models,
-        layer2=layer2,
+        calibration_corroboration=calibration_corroboration,
         reference_hour=run.metadata["reference_hour_utc"],
     )
     after = _scorecard_input_hashes(args)
@@ -469,7 +471,7 @@ def main(argv: list[str] | None = None) -> None:
     require_files(
         "Station-health construction",
         {"canonical merged dataset": args.observations},
-        "Provide the published canonical dataset and run the public reference fetch first.",
+        "Start from the frozen hourly dataset and run the public reference fetch first.",
     )
     _require_reference_cache(args.reference_dir)
     if args.causality_samples <= 0:
@@ -487,7 +489,11 @@ def main(argv: list[str] | None = None) -> None:
             )
     observations = pd.read_csv(args.observations, low_memory=False)
     reference = load_exact_hour_reference(args.reference_dir)
-    layer2 = pd.read_csv(LABEL_LAYER2_PATH) if LABEL_LAYER2_PATH.is_file() else None
+    calibration_corroboration = (
+        pd.read_csv(CALIBRATION_CORROBORATION_PATH)
+        if CALIBRATION_CORROBORATION_PATH.is_file()
+        else None
+    )
     scores = build_station_health_scores(observations, reference)
     causality_audit = validate_delete_future_health_scores(
         observations,
@@ -501,7 +507,7 @@ def main(argv: list[str] | None = None) -> None:
         causality_audit=causality_audit,
         input_hashes_before=before,
         input_hashes_after=after,
-        layer2=layer2,
+        calibration_corroboration=calibration_corroboration,
         previous_scores=previous_scores,
         output_paths={
             "scores": args.scores_output,

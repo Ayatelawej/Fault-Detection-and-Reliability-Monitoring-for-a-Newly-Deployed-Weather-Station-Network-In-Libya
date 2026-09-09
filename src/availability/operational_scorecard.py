@@ -426,12 +426,12 @@ def _attach_causal_offset_evidence(table: pd.DataFrame) -> pd.DataFrame:
 
 
 def _retrospective_calibration_overlap_count(
-    layer2: pd.DataFrame | None,
+    calibration_corroboration: pd.DataFrame | None,
     reference_hour: pd.Timestamp,
 ) -> int:
-    if layer2 is None or layer2.empty:
+    if calibration_corroboration is None or calibration_corroboration.empty:
         return 0
-    source = layer2.copy(deep=True)
+    source = calibration_corroboration.copy(deep=True)
     required = {"verdict", "sustained_offset", "start_hour", "end_hour"}
     if required.difference(source.columns):
         return 0
@@ -582,7 +582,7 @@ def build_operational_scorecard(
     *,
     availability: pd.DataFrame | None = None,
     forecast_models: Mapping[int, FittedHealthForecastModel] | None = None,
-    layer2: pd.DataFrame | None = None,
+    calibration_corroboration: pd.DataFrame | None = None,
     reference_hour: object | None = None,
     expected_station_count: int = 26,
     horizons: tuple[int, ...] = SCORECARD_HORIZONS,
@@ -697,8 +697,11 @@ def build_operational_scorecard(
         "field_count": int(len(table.columns)),
         "unexplained_nulls": int(table["unexplained_null_count"].sum()),
         "inconsistency_count": int(len(inconsistencies)),
-        "retrospective_layer2_intervals_overlapping_reference_excluded": (
-            _retrospective_calibration_overlap_count(layer2, resolved)
+        "retrospective_calibration_intervals_overlapping_reference_excluded": (
+            _retrospective_calibration_overlap_count(
+                calibration_corroboration,
+                resolved,
+            )
         ),
         "fault_signal_contract": "causal_rule_evidence_proxy_not_trained_binary_model",
         "reason_code_contract": "trained_event_reason_codes_unavailable_for_causal_live_use",
@@ -719,7 +722,7 @@ def validate_delete_future_operational_scorecard(
     *,
     availability: pd.DataFrame | None,
     forecast_models: Mapping[int, FittedHealthForecastModel],
-    layer2: pd.DataFrame | None,
+    calibration_corroboration: pd.DataFrame | None,
     reference_hour: object,
     expected_station_count: int = 26,
 ) -> pd.DataFrame:
@@ -729,7 +732,7 @@ def validate_delete_future_operational_scorecard(
         registry,
         availability=availability,
         forecast_models=forecast_models,
-        layer2=layer2,
+        calibration_corroboration=calibration_corroboration,
         reference_hour=cutoff,
         expected_station_count=expected_station_count,
     ).table
@@ -748,7 +751,7 @@ def validate_delete_future_operational_scorecard(
         registry,
         availability=availability_source,
         forecast_models=forecast_models,
-        layer2=layer2,
+        calibration_corroboration=calibration_corroboration,
         reference_hour=cutoff,
         expected_station_count=expected_station_count,
     ).table
@@ -804,7 +807,7 @@ def operational_scorecard_report(run: OperationalScorecardRun) -> str:
         "Current fault status is a causal rule-evidence proxy, not the retrospective trained binary detector.",
         "Event-level trained mechanism reason codes are unavailable in the causal live path and are never filled from held-out prediction ledgers.",
         "Health forecasts are emitted for transmitting stations, including partial outages, and suppressed during full outages.",
-        "Layer 2 calibration intervals are retrospective; they are excluded from operational fields. Causal persistent pressure-offset evidence is shown separately.",
+        "Calibration-corroboration intervals are retrospective; they are excluded from operational fields. Causal persistent pressure-offset evidence is shown separately.",
         "",
         "DISTRIBUTION SUMMARY",
         run.distribution.to_string(index=False),
@@ -876,8 +879,8 @@ def operational_scorecard_report(run: OperationalScorecardRun) -> str:
         f"field_count={run.metadata['field_count']}",
         f"unexplained_nulls={run.metadata['unexplained_nulls']}",
         f"inconsistency_count={run.metadata['inconsistency_count']}",
-        "retrospective_layer2_intervals_overlapping_reference_excluded="
-        f"{run.metadata['retrospective_layer2_intervals_overlapping_reference_excluded']}",
+        "retrospective_calibration_intervals_overlapping_reference_excluded="
+        f"{run.metadata['retrospective_calibration_intervals_overlapping_reference_excluded']}",
         "",
     ]
     return "\n".join(lines)
