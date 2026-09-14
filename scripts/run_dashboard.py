@@ -14,6 +14,7 @@ from src.dashboard.replay import (
     build_replay_snapshot,
     event_detector_evidence,
     event_layer_status,
+    event_reason_history,
     load_replay_bundle,
     replay_hours,
     segment_predicted_fault_events,
@@ -22,7 +23,7 @@ from src.dashboard.replay import (
 )
 
 
-DASHBOARD_SCHEMA_VERSION = "2026-08-13-simple-v1"
+DASHBOARD_SCHEMA_VERSION = "2026-09-13-mixed-reason-output-v2"
 
 
 @st.cache_data(show_spinner="Loading July replay...")
@@ -60,7 +61,7 @@ def _network_page(snapshot: pd.DataFrame) -> None:
         column.metric(category, int(counts.get(category, 0)))
     st.caption("The four categories are mutually exclusive and total 26 stations.")
     st.dataframe(
-        snapshot[["station_id", "city", "health_total", "health_band", "status", "finding", "health_24h"]],
+        snapshot[["station_id", "city", "health_total", "health_band", "status", "finding", "likely_mechanisms", "likely_components", "weather_note", "health_24h"]],
         hide_index=True,
         width="stretch",
         column_config={
@@ -70,6 +71,9 @@ def _network_page(snapshot: pd.DataFrame) -> None:
             "health_band": "Band",
             "status": "Status",
             "finding": "Current finding",
+            "likely_mechanisms": "Likely mechanism(s)",
+            "likely_components": "Likely component(s)",
+            "weather_note": "Weather context — alert retained",
             "health_24h": "Health +24 h",
         },
     )
@@ -93,6 +97,16 @@ def _station_page(bundle: ReplayBundle, snapshot: pd.DataFrame, hour: pd.Timesta
     metrics[1].metric("Health", f"{row['health_total']:.1f}")
     metrics[2].metric("Band", row["health_band"])
     metrics[3].metric("Fault probability", "N/A" if pd.isna(row["fault_probability"]) else f"{row['fault_probability']:.1%}")
+    if row["weather_note"]:
+        st.info(row["weather_note"])
+        st.caption("Context annotation only: the fault alert, reason codes and health score are unchanged.")
+    st.markdown("#### Likely fault reasons")
+    if row["mechanism_status"] == "not_applicable":
+        st.info("No applicable sensor-fault reason at this hour. Outages are reported separately.")
+    else:
+        st.write("Mechanism(s): " + row["likely_mechanisms"])
+        st.write("Component(s): " + row["likely_components"])
+        st.caption("Current-hour EF-HGB reason heads; evidence-derived likelihoods, not confirmed hardware diagnoses. Multiple codes or insufficient evidence are possible.")
     st.markdown("#### Health history")
     history = station_history(bundle, station_id, hour).set_index("hour_utc")
     st.line_chart(history, y="health_total", height=250)
@@ -150,6 +164,17 @@ def _event_page(bundle: ReplayBundle, hour: pd.Timestamp) -> None:
     columns[2].metric("Duration", f"{int(event['duration_hours'])} h")
     columns[3].metric("Peak probability", f"{event['peak_probability']:.1%}")
     st.caption(f"Selected EF-HGB threshold: {SELECTED_DETECTOR_THRESHOLD:.0%}")
+    st.markdown("#### Model-predicted reason history")
+    reasons = event_reason_history(bundle, event)
+    if reasons.empty:
+        st.info("No reason-code output available for this event.")
+    else:
+        st.dataframe(reasons, hide_index=True, width="stretch", column_config={
+            "hour_utc": "Hour (UTC)", "likely_mechanisms": "Likely mechanism(s)",
+            "likely_components": "Likely component(s)", "mechanism_status": "Mechanism status",
+            "component_status": "Component status"})
+    st.caption("Reasons describe each hour, not a label broadcast over the whole event. Empty codes mean insufficient evidence.")
+    st.markdown("#### Supporting detector evidence")
     evidence = event_detector_evidence(bundle, event)
     if evidence.empty:
         st.warning("No individual saved detector flag fired inside this EF-HGB-positive event.")
@@ -164,7 +189,7 @@ def _event_page(bundle: ReplayBundle, hour: pd.Timestamp) -> None:
                 "Margin": st.column_config.NumberColumn(format="%.4f"),
             },
         )
-        st.caption("Components are detector-evidence groups, not model-predicted components.")
+        st.caption("Components in this evidence table are detector groups; learned component predictions appear above.")
     external, spatial = event_layer_status(bundle, event)
     st.info(external)
     st.info(spatial)
@@ -195,7 +220,7 @@ def main() -> None:
     with evidence:
         _event_page(bundle, hour)
     st.caption(
-        f"Selected EF-HGB and health-forecast policies · rule statistics frozen through "
+        f"Selected EF-HGB, current-hour mechanism/component heads and health-forecast policies · rule statistics frozen through "
         f"{FROZEN_STATISTICS_END:%d %B %Y} on {FROZEN_STATISTICS_ROWS:,} rows"
     )
     if st.session_state.replay_running:

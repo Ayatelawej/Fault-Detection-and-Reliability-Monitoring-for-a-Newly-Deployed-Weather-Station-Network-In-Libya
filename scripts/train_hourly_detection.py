@@ -9,7 +9,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.workflows.train_hourly_baseline import main as run_baseline
-from src.workflows.train_hourly_baseline import reason_codes_main as run_reason_codes
+from src.workflows.train_hourly_baseline import reason_codes_main as run_legacy_reason_codes
+from src.model.final_reason_codes import main as run_reason_codes
 from src.workflows.train_hourly_calibration import main as run_calibration
 from src.workflows.train_hourly_rgfn import main as run_rgfn
 from src.workflows.train_hourly_rgfn import evidence_fusion_main as run_evidence_fusion
@@ -27,6 +28,7 @@ RUNNERS: dict[str, Callable[[list[str] | None], None]] = {
     "one-hour-comparison": run_one_hour_comparison,
     "one-hour-july": run_one_hour_july,
     "reason-codes": run_reason_codes,
+    "reason-codes-legacy": run_legacy_reason_codes,
 }
 
 

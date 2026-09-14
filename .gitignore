@@ -2,7 +2,14 @@
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
 .cache/
+.pytest_cache/
+.uv-cache/
+.coverage
+.coverage.*
+htmlcov/
 data/external/
 data/staging/
 data/features/
@@ -30,9 +37,7 @@ docs/report_drafts/
 outputs/exports/
 outputs/eda/
 *.docx
-!docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes_finalized.docx
-docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes.docx
-docs/report/Ayat_Elawej_EC499_Report_v13_reason_codes_final.docx
+!docs/report/Ayat_Elawej_EC499_Report_FINAL.docx
 *.zip
 outputs/report_revision/
 

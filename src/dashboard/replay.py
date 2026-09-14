@@ -23,6 +23,8 @@ JULY_FORECAST_PATH = PROJECT_ROOT / "data/eval/july_2026_health_forecast/july_he
 JULY_DETECTION_PATH = PROJECT_ROOT / "data/eval/one_hour_candidate/july_ef_hgb_binary_predictions.parquet"
 JULY_SCORES_PATH = PROJECT_ROOT / "data/eval/july_2026_features/statistical_anomaly_scores.parquet"
 JULY_NEIGHBORS_PATH = PROJECT_ROOT / "data/eval/july_2026_features/spatial_neighbors.csv"
+JULY_REASON_PATH = PROJECT_ROOT / "data/eval/july_2026_reason_codes_mixed_v2/reason_code_predictions.parquet"
+JULY_WEATHER_NOTES_PATH = PROJECT_ROOT / "data/eval/july_2026_weather_annotations/weather_annotations.parquet"
 HEALTH_COMPONENT_COLUMNS = {
     "Availability": "weighted_health_availability",
     "Sensor completeness": "weighted_health_sensor_completeness",
@@ -88,6 +90,8 @@ class ReplayBundle:
     scores: pd.DataFrame
     neighbors: pd.DataFrame
     registry: pd.DataFrame
+    reasons: pd.DataFrame | None = None
+    weather_notes: pd.DataFrame | None = None
 
 
 def _utc(frame: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -108,8 +112,12 @@ def load_replay_bundle(
     scores_path: Path = JULY_SCORES_PATH,
     neighbors_path: Path = JULY_NEIGHBORS_PATH,
     registry_path: Path = STATION_REGISTRY_PATH,
+    reason_path: Path | None = JULY_REASON_PATH,
+    weather_note_path: Path | None = JULY_WEATHER_NOTES_PATH,
 ) -> ReplayBundle:
     paths = [health_path, forecast_path, detection_path, scores_path, neighbors_path, registry_path]
+    if reason_path is not None:
+        paths.append(reason_path)
     missing = [str(path) for path in paths if not Path(path).exists()]
     if missing:
         raise FileNotFoundError("Missing dashboard inputs:\n" + "\n".join(missing))
@@ -144,6 +152,31 @@ def load_replay_bundle(
         ),
         "hour_utc",
     )
+    reasons = None
+    if reason_path is not None:
+        reasons = _utc(pd.read_parquet(reason_path, columns=[
+            "station_id", "hour_utc", "random_probability", "random_prediction",
+            "likely_mechanisms", "likely_components", "mechanism_status", "component_status",
+            "reason_model_version",
+        ]), "hour_utc")
+        keys = ["station_id", "hour_utc"]
+        gate_columns = keys + ["random_probability", "random_prediction"]
+        try:
+            pd.testing.assert_frame_equal(
+                detections[gate_columns].sort_values(keys).reset_index(drop=True),
+                reasons[gate_columns].sort_values(keys).reset_index(drop=True), check_dtype=False,
+            )
+        except AssertionError as error:
+            raise ValueError("Reason ledger does not match the selected binary detector; rescore the release") from error
+    weather_notes = None
+    if weather_note_path is not None and Path(weather_note_path).exists():
+        columns = ["station_id", "hour_utc", "random_probability", "random_prediction"]
+        weather_notes = _utc(pd.read_parquet(weather_note_path, columns=columns + ["weather_note"]), "hour_utc")
+        try:
+            pd.testing.assert_frame_equal(detections[columns].sort_values(columns[:2]).reset_index(drop=True),
+                weather_notes[columns].sort_values(columns[:2]).reset_index(drop=True), check_dtype=False)
+        except AssertionError as error:
+            raise ValueError("Weather notes do not match the selected detector") from error
     return ReplayBundle(
         health.sort_values(["hour_utc", "station_id"]).reset_index(drop=True),
         forecasts.sort_values(["hour_utc", "station_id", "horizon_h"]).reset_index(drop=True),
@@ -151,6 +184,8 @@ def load_replay_bundle(
         scores.loc[scores["hour_utc"].between(JULY_START, JULY_END)].reset_index(drop=True),
         pd.read_csv(neighbors_path),
         pd.read_csv(registry_path).sort_values("station_id").reset_index(drop=True),
+        reasons,
+        weather_notes,
     )
 
 
@@ -191,6 +226,29 @@ def build_replay_snapshot(bundle: ReplayBundle, reference_hour: object) -> pd.Da
         ["station_id", "random_probability", "random_prediction"],
     ].rename(columns={"random_probability": "fault_probability", "random_prediction": "fault_detected"})
     snapshot = snapshot.merge(detection, on="station_id", how="left", validate="one_to_one")
+    if bundle.weather_notes is not None:
+        current_notes = bundle.weather_notes.loc[bundle.weather_notes.hour_utc.eq(hour), ["station_id", "weather_note"]]
+        snapshot = snapshot.merge(current_notes, on="station_id", how="left", validate="one_to_one")
+        snapshot["weather_note"] = snapshot.weather_note.fillna("")
+    else:
+        snapshot["weather_note"] = ""
+    snapshot.loc[~snapshot.fault_detected.eq(1) | snapshot.availability_class.eq("full_outage"), "weather_note"] = ""
+    reason_columns = ["likely_mechanisms", "likely_components", "mechanism_status", "component_status"]
+    if bundle.reasons is not None:
+        current = bundle.reasons.loc[bundle.reasons.hour_utc.eq(hour), ["station_id"] + reason_columns]
+        snapshot = snapshot.merge(current, on="station_id", how="left", validate="one_to_one")
+    for axis in ("mechanism", "component"):
+        codes, state = f"likely_{axis}s", f"{axis}_status"
+        if codes not in snapshot:
+            snapshot[codes], snapshot[state] = "", "unavailable"
+        snapshot[codes] = snapshot[codes].fillna("")
+        snapshot[state] = snapshot[state].fillna("unavailable")
+        eligible = snapshot.fault_detected.eq(1) & ~snapshot.availability_class.eq("full_outage")
+        snapshot.loc[~eligible, codes] = ""
+        snapshot.loc[~eligible, state] = "not_applicable"
+        snapshot[codes] = snapshot[codes].str.replace("_", " ", regex=False)
+        snapshot.loc[eligible & snapshot[codes].eq(""), codes] = snapshot.loc[
+            eligible & snapshot[codes].eq(""), state].str.replace("_", " ", regex=False)
     events = segment_predicted_fault_events(bundle.detections, hour)
     active = events.loc[events["status"].eq("active"), ["station_id", "duration_hours"]]
     snapshot = snapshot.merge(active.rename(columns={"duration_hours": "fault_run_hours"}), on="station_id", how="left")
@@ -229,6 +287,18 @@ def station_history(bundle: ReplayBundle, station_id: str, reference_hour: objec
         bundle.health["station_id"].eq(station_id) & bundle.health["hour_utc"].between(hour - pd.Timedelta(hours=71), hour),
         ["hour_utc", "health_total"],
     ].copy()
+
+
+def event_reason_history(bundle: ReplayBundle, event: pd.Series) -> pd.DataFrame:
+    """Current-hour predictions only, clipped to the visible predicted event."""
+    columns = ["hour_utc", "likely_mechanisms", "likely_components", "mechanism_status", "component_status"]
+    if bundle.reasons is None:
+        return pd.DataFrame(columns=columns)
+    rows = bundle.reasons.loc[
+        bundle.reasons.station_id.eq(event.station_id)
+        & bundle.reasons.hour_utc.between(event.start_hour, event.end_hour)
+        & bundle.reasons.random_prediction.eq(1), columns].copy()
+    return rows.sort_values("hour_utc")
 
 
 def station_sensor_states(bundle: ReplayBundle, station_id: str, reference_hour: object) -> pd.DataFrame:
