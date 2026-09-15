@@ -122,5 +122,5 @@ metrics, sample prediction ledger and audit. Earlier experiment files are retain
 
 ```powershell
 python scripts/experiment_blocked_reason_codes.py --output data/eval/blocked_reason_codes_new_run
-python -m pytest tests/test_blocked_reason_codes.py tests/test_chronological_fault_detection.py tests/test_reason_code_rebuild.py tests/test_final_reason_codes.py -q
+python -m pytest tests/test_blocked_reason_codes.py tests/test_blocked_fault_detection.py tests/test_reason_code_rebuild.py tests/test_final_reason_codes.py -q
 ```

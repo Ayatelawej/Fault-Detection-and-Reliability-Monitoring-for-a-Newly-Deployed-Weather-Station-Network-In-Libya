@@ -14,7 +14,7 @@ the six ignored replay inputs are not included in this source publication.
 
 The delivered UI is a frozen July 2026 replay, not a live-feed service. It reads
 saved operational tables and performs no fitting or inference. Training, tuning,
-legacy episode reason codes, blocked/chronological experiments, temperature
+legacy episode reason codes, blocked temporal holdout experiments, temperature
 specialists, and incident-risk forecasts remain research/reproduction workflows.
 Preserve their source and compact evidence; they are not startup prerequisites.
 

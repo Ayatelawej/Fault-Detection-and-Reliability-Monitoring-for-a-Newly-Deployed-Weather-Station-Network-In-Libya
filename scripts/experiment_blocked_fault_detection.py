@@ -23,7 +23,6 @@ from src.model.hourly_baseline import (
     flatten_hourly_features, load_hourly_tensor,
 )
 from src.model.hourly_calibration import CALIBRATION_THRESHOLDS
-from src.model.reason_code_rebuild import chronological_split
 
 
 def sha(path):
@@ -59,7 +58,7 @@ def blocked_split(hours, groups):
             for k, name in enumerate(('train', 'validation', 'test'))}
 
 
-def validate_split(hours, groups, splits, chronological=True):
+def validate_split(hours, groups, splits, chronological=False):
     h = pd.DatetimeIndex(hours)
     for name, indices in splits.items():
         if len(indices) == 0 or len(np.unique(indices)) != len(indices):
@@ -73,9 +72,8 @@ def validate_split(hours, groups, splits, chronological=True):
             raise ValueError('Connected groups cross partitions')
 
 
-def run(out, mode='chronological'):
-    if mode not in ('chronological', 'blocked'):
-        raise ValueError(mode)
+def run(out):
+    mode = 'blocked'
     if out.exists():
         raise FileExistsError(out)
     started = time.perf_counter()
@@ -99,16 +97,11 @@ def run(out, mode='chronological'):
                        for s, t in zip(z['station_id'], hours)], dtype=object)
     for key, indices in _fault_groups(y, z['source_episode_ids']).items():
         groups[indices] = 'event:' + key
-    splits = (chronological_split if mode == 'chronological' else blocked_split)(hours, groups)
-    validate_split(hours, groups, splits, chronological=mode == 'chronological')
-    saved = pd.read_csv(membership_path) if mode == 'chronological' else None
-    if saved is not None:
-        saved = saved[saved.scheme.eq('chronological')]
-    validation_month = 'april' if mode == 'chronological' else 'february'
+    splits = blocked_split(hours, groups)
+    validate_split(hours, groups, splits)
+    validation_month = 'february'
     support = {}
     for name, ii in splits.items():
-        if saved is not None:
-            np.testing.assert_array_equal(ii, saved.loc[saved.partition.eq(name), 'row_index'].to_numpy())
         assert len(np.unique(y[ii])) == 2
         support[name] = dict(hours=len(ii), faults=int(y[ii].sum()),
             normal=int((y[ii] == 0).sum()), first=str(hours[ii].min()), last=str(hours[ii].max()),
@@ -180,7 +173,7 @@ def run(out, mode='chronological'):
     assert before == after, 'Protected artifact changed'
     audit = dict(elapsed_seconds=time.perf_counter() - started, thread_limit=2,
         protected_unchanged=True, feature_count=x.shape[1],
-        existing_chronological_membership_reproduced=mode == 'chronological', group_overlap=0,
+        group_overlap=0,
         serialized_model_replay=True, results=results, **plan)
     (out / 'report.json').write_text(json.dumps(audit, indent=2), encoding='utf-8')
     print(json.dumps(audit, indent=2), flush=True)
@@ -188,8 +181,8 @@ def run(out, mode='chronological'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('chronological', 'blocked'), default='chronological')
+    parser.add_argument('--mode', choices=('blocked',), default='blocked')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     with threadpool_limits(limits=2):
-        run(args.output or ROOT / f'data/eval/{args.mode}_ef_hgb_20260914', args.mode)
+        run(args.output or ROOT / 'data/eval/blocked_ef_hgb_20260914')

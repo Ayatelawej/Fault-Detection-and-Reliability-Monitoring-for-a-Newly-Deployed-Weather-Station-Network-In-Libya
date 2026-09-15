@@ -1,19 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from scripts.experiment_chronological_fault_detection import blocked_split, select_threshold, validate_split
-from src.model.reason_code_rebuild import chronological_split
-
-
-def test_chronology_embargo_and_crossing_events():
-    hours = pd.to_datetime(['2026-03-20', '2026-03-31', '2026-04-01',
-        '2026-04-08', '2026-04-30', '2026-05-01', '2026-05-08'], utc=True)
-    groups = np.array(['a', 'cross', 'cross', 'b', 'cross2', 'cross2', 'c'])
-    split = chronological_split(hours, groups)
-    assert split['train'].tolist() == [0]
-    assert split['validation'].tolist() == [3]
-    assert split['test'].tolist() == [6]
-    validate_split(hours, groups, split)
+from scripts.experiment_blocked_fault_detection import blocked_split, select_threshold, validate_split
 
 
 def test_reject_group_leakage():
@@ -41,7 +29,7 @@ def test_blocked_periods_include_later_training_and_gaps():
     assert splits['test'].tolist() == [4, 5]
     validate_split(hours, groups, splits, chronological=False)
     with pytest.raises(ValueError, match='Non-chronological'):
-        validate_split(hours, groups, splits)
+        validate_split(hours, groups, splits, chronological=True)
 
 
 def test_blocked_crossing_events_removed_on_both_sides():

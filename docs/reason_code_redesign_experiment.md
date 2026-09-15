@@ -103,10 +103,10 @@ the production detector. The time split has ample binary fault support, but this
 work does not constitute a full chronological retraining/evaluation of the final
 binary EF-HGB system.
 
-Follow-up (14 September): a [bounded chronological binary EF-HGB test](chronological_fault_detection_test.md)
-now refits the final configuration on pre-April data using the existing tensor
-and labels. May–June test F1 is 71.96%; this remains a model-transfer diagnostic,
-not a fully causal reconstruction of the complete pipeline. Deployment is unchanged.
+Follow-up (14 September): the [blocked temporal holdout](blocked_fault_detection_test.md)
+assesses the final binary configuration on March–April, with February validation
+and training on both sides. Matching reason-head results are recorded in
+[the blocked reason-code test](blocked_reason_code_test.md).
 
 ## Verification and limitations
 

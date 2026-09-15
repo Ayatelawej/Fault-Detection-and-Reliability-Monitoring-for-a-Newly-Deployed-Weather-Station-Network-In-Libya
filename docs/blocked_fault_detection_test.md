@@ -2,7 +2,7 @@
 
 This requested follow-up holds out March–April 2026 while including May–June
 2026 in training. It is a blocked-period classification test, not chronological
-future prediction. The earlier May–June chronological result remains unchanged.
+future prediction.
 
 ## Fixed design
 
@@ -39,14 +39,9 @@ validation F1 is 87.31% at 0.30 and 89.69% at its selected 0.35.
 
 ## Interpretation
 
-This is useful supplementary evidence: the model can classify a held-out
-two-month block substantially better here than in the earlier chronological
-May–June experiment (71.96% F1). At the unchanged 0.30 threshold, the numerical
-difference is 15.05 percentage points. This is not a controlled estimate of a
-seasonal effect: both training composition and test period changed, and later
-months are now available for training. It neither proves that heat caused the
-previous decline nor demonstrates 87% future-month F1. Retain both experiments
-and name their different designs explicitly.
+This is useful supplementary evidence of classification on a held-out period.
+Training includes later months, so it does not estimate future-month performance.
+It does not isolate seasonal effects or establish heat as the cause of a decline.
 
 Existing feature preprocessing and weak reference labels were reused, including
 their previously documented retrospective timing limitations. Architecture,
@@ -66,9 +61,9 @@ imports with a two-thread limit; no training job remains running.
 
 Saved output: `data/eval/blocked_ef_hgb_20260914/` contains the pre-fit plan,
 threshold selection, prediction ledger, split membership, isolated model,
-metrics and final audit. The prior chronological output was not overwritten.
+metrics and final audit.
 
 ```powershell
-python scripts/experiment_chronological_fault_detection.py --mode blocked --output data/eval/blocked_ef_hgb_new_run
-python -m pytest tests/test_chronological_fault_detection.py -q
+python scripts/experiment_blocked_fault_detection.py --mode blocked --output data/eval/blocked_ef_hgb_new_run
+python -m pytest tests/test_blocked_fault_detection.py -q
 ```

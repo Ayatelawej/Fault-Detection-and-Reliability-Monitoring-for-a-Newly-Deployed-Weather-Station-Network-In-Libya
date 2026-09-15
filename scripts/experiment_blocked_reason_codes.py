@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupKFold
 from threadpoolctl import threadpool_limits
-from scripts.experiment_chronological_fault_detection import blocked_split, validate_split
+from scripts.experiment_blocked_fault_detection import blocked_split, validate_split
 from src.model.hourly_baseline import load_hourly_tensor, _fault_groups, binary_metrics
 from src.model.final_reason_codes import load_observations, build_features, FREEZE, apply_output_policy
 from src.model.reason_code_rebuild import (
