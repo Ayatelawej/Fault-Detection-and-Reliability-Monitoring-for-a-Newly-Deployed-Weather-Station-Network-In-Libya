@@ -1,0 +1,13 @@
+{
+  "version": "validation-selected-episode-reasons-v3",
+  "selected_families": {
+    "component": "EF-HGB",
+    "mechanism": "EF-HGB"
+  },
+  "feature_count": 322,
+  "trained_through": "2026-06-30 23:00:00+00:00",
+  "training_fault_hours": 9260,
+  "selection": "Temporal validation micro-F1 per axis; minimum-one both outputs; original episode targets.",
+  "july_used_for_selection": false,
+  "model_sha256": "0d55ce81ceb13b344323491af899d577f05f4281cfedbd49d98b1b4647940d0f"
+}

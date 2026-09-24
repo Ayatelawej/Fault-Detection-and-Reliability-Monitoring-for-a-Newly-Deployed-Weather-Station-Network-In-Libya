@@ -41,7 +41,11 @@ from src.model.hourly_baseline import (
     write_metrics_json,
 )
 from src.model.hourly_detection import MASK_MODE_PER_FEATURE, MASK_MODE_PER_HOUR
-from src.model.hourly_rgfn_training import HourlyReasonCodeRgfnConfig, fit_reason_code_rgfn_models
+from src.model.hourly_rgfn_training import (
+    HourlyReasonCodeRgfnConfig,
+    diagnostic_reason_code_threshold,
+    fit_reason_code_rgfn_models,
+)
 from src.workflows.train_hourly_baseline import (
     _frozen_selection_test_metrics,
     _verify_saved_prediction_artifact,
@@ -685,6 +689,18 @@ def test_reason_code_metrics_marks_zero_positive_test_support_not_estimable() ->
     assert metrics["recall"] is None
     assert metrics["f1"] is None
     assert metrics["accuracy"] == 2.0 / 3.0
+
+
+def test_rgfn_validation_diagnostic_allows_single_class_reason_label() -> None:
+    threshold, metrics, candidate_count, status = diagnostic_reason_code_threshold(
+        np.asarray([0, 0, 0], dtype=int),
+        np.asarray([0.1, 0.3, 0.2], dtype=float),
+    )
+
+    assert threshold is None
+    assert metrics is None
+    assert candidate_count == 0
+    assert status == "not_estimable_single_class_validation"
 
 
 def test_true_80_20_runs_without_a_validation_partition() -> None:

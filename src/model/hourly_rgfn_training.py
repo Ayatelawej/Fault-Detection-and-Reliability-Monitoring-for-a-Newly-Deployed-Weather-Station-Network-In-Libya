@@ -407,6 +407,18 @@ def predict_reason_code_rgfn(
     return np.concatenate(values, axis=0) if values else np.empty((0, width), dtype=np.float32)
 
 
+def diagnostic_reason_code_threshold(
+    labels: np.ndarray,
+    probabilities: np.ndarray,
+) -> tuple[float | None, dict[str, object] | None, int, str]:
+    """Return an optional validation-only diagnostic for a reason head."""
+    target = np.asarray(labels, dtype=int)
+    if len(np.unique(target)) < 2:
+        return None, None, 0, "not_estimable_single_class_validation"
+    threshold, metrics, count = select_reason_code_threshold(target, probabilities)
+    return float(threshold), metrics, int(count), "estimated"
+
+
 def _reason_code_rgfn_model(
     config: HourlyReasonCodeRgfnConfig,
     train_partition: TensorPartition,
@@ -918,7 +930,15 @@ def _fit_reason_code_rgfn_split(
             validation_probabilities[:, index],
             threshold,
         )
-        reference_threshold, reference_metrics, reference_candidate_count = select_reason_code_threshold(
+        # This value is diagnostic only: deployed thresholds come from the
+        # grouped training OOF procedure above. A blocked validation period may
+        # legitimately have no positives for a rare reason code.
+        (
+            reference_threshold,
+            reference_metrics,
+            reference_candidate_count,
+            reference_status,
+        ) = diagnostic_reason_code_threshold(
             validation_targets[:, index],
             validation_probabilities[:, index],
         )
@@ -937,9 +957,12 @@ def _fit_reason_code_rgfn_split(
                 "validation_support": int(validation_targets[:, index].sum()),
                 "positive_class_weight": float(positive_weights[index]),
                 "validation_metrics": metrics,
-                "single_validation_reference_threshold": float(reference_threshold),
+                "single_validation_reference_threshold": (
+                    None if reference_threshold is None else float(reference_threshold)
+                ),
                 "single_validation_reference_metrics": reference_metrics,
                 "single_validation_reference_candidate_count": int(reference_candidate_count),
+                "single_validation_reference_status": reference_status,
                 "single_validation_reference_is_diagnostic_only": True,
                 "outer_validation_used_for_threshold_selection": False,
                 "test_metrics_read_during_selection": False,

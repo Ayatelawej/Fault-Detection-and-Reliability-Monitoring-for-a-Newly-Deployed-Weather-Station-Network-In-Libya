@@ -180,11 +180,8 @@ def build_station_reliability_summary(
         row["local_event_count"] = int(
             station_full["outage_class"].eq("local").sum()
         )
-        row["network_midnight_event_count"] = int(
-            station_full["outage_class"].eq("network_midnight").sum()
-        )
-        row["network_other_event_count"] = int(
-            station_full["outage_class"].eq("network_other").sum()
+        row["coordinated_event_count"] = int(
+            station_full["outage_class"].eq("coordinated").sum()
         )
         row["partial_outage_event_count"] = int(len(station_partial))
         row["partial_outage_hours"] = int(station_partial["duration_hours"].sum())

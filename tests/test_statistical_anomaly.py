@@ -1155,6 +1155,17 @@ class TestScoreOrchestratorIntegration:
         assert PHYSICAL_LIMIT_RULES["precip_rate_mmh"]["max"] == 1_000.0
         assert PHYSICAL_LIMIT_RULES["precip_total_mm"]["max"] == 1_000.0
 
+    def test_pressure_trend_has_only_strict_hard_limit(self) -> None:
+        from src.rules.config import PHYSICAL_SUSPECT_RULES
+        from src.rules.physical_limits import physical_limit_flags, physical_suspect_flags
+
+        values = pd.Series([-30.0, -21.0, -20.0, 0.0, 18.0, 20.0, 21.0, 30.0, np.nan])
+        assert "pressure_trend_hpa" not in PHYSICAL_SUSPECT_RULES
+        assert physical_limit_flags(values, "pressure_trend_hpa").tolist() == [
+            True, True, False, False, False, False, True, True, False,
+        ]
+        assert not physical_suspect_flags(values, "pressure_trend_hpa").any()
+
     def test_compute_anomaly_scores_marks_suspect_values_only_when_flagged(
         self,
     ) -> None:

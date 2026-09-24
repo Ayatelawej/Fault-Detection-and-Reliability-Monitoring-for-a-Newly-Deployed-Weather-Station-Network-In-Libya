@@ -248,7 +248,6 @@ PHYSICAL_SUSPECT_RULES = {
     "windgust_low_kmh": {"max": 180.0, "kind": "wind"},
     "precip_rate_mmh": {"max": 300.0, "kind": "rain_rate"},
     "precip_total_mm": {"max": 300.0, "kind": "rain_total"},
-    "pressure_trend_hpa": {"max_abs": 20.0, "kind": "pressure_trend"},
 }
 
 CHANNEL_BASELINE_WINDOWS = {

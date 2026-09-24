@@ -1,14 +1,13 @@
 # Source checkout and replay release checklist
 
-Public snapshot note (14 September 2026): this publication includes the system
-source, tests and experiment notes, but intentionally omits README.md, REPO_MAP.md,
-the report directory and the report-generation script pending author edits.
-References below to those materials describe the separately retained local/private
-release, not files available in this public checkout. Public history and previously
-published result evidence are preserved; no private-backup history is merged.
-The exact public snapshot passed 424 tests with one explicit replay integration
-skip in 73.74 seconds under two-thread numerical limits. The skip is expected:
-the six ignored replay inputs are not included in this source publication.
+Public snapshot note (24 September 2026): this publication includes the updated
+system, tests, dashboard, experiment notes and compact final release metrics.
+README.md and REPO_MAP.md remain removed at the author's request. The Word report
+directory and report-generation script remain local/private, as in the previous
+public snapshot. No private history is merged. Serialized models and large July
+replay tables are not uploaded; restore the matching artifacts listed below.
+The full local release passed 448 tests, including the actual July dashboard test.
+Source-only checkouts explicitly skip that integration test without its artifacts.
 
 ## Scope
 
@@ -60,16 +59,16 @@ to make the smoke test run. All six required tables below are ignored by Git.
 | Required path | Purpose |
 | --- | --- |
 | `data/eval/july_2026_health/station_health_scores_through_july.parquet` | Health history including pre-July context for causal projections. |
-| `data/eval/july_2026_health_forecast/july_health_forecast_predictions.parquet` | Selected saved forecast policies. |
-| `data/eval/one_hour_candidate/july_ef_hgb_binary_predictions.parquet` | Frozen selected binary detector ledger. |
+| `data/eval/final_system_release_20260924/dashboard_forecasts.parquet` | Selected saved forecast policies. |
+| `data/eval/final_system_release_20260924/binary_predictions.parquet` | Temporal-validation-selected binary detector ledger. |
 | `data/eval/july_2026_features/statistical_anomaly_scores.parquet` | Detector-evidence scores. |
 | `data/eval/july_2026_features/spatial_neighbors.csv` | Neighbour graph. |
-| `data/eval/july_2026_reason_codes_mixed_v2/reason_code_predictions.parquet` | Active mixed-policy reason ledger; not the old threshold-only directory. |
+| `data/eval/final_system_release_20260924/reasons/reason_code_predictions.parquet` | Active episode-target reason ledger; minimum-one mechanism and component. Preserve its scoring manifest. |
 
 The registry `data/merged/station_registry.csv` is tracked and required.
 For the full delivered presentation, also restore the optional
-`data/eval/july_2026_weather_annotations/weather_annotations.parquet` and its
-`manifest.json`; without them, weather notes are omitted but alerts remain.
+`data/eval/final_system_release_20260924/weather_annotations.parquet` and the
+release's `release_manifest.json`; without notes, alerts remain.
 
 Restore companion manifests/audits with their tables, especially the active
 reason `scoring_manifest.json`. Record archive provenance, release/commit ID,
@@ -86,8 +85,12 @@ Network, Station, and Evidence views. No model archive is needed just to replay.
 
 ## Additional reproduction artifacts (not needed just to replay)
 
-- `data/model/reason_codes/final/`: `reason_heads.joblib`, `manifest.json`, and
-  selection evidence. Load serialized models only from a trusted archive.
+- `data/model/final_system_20260924/`: active binary, reasons and eleven forecast
+  models; selection/evaluation sources are `final_reason_comparison_20260924`,
+  `final_forecast_comparison_20260924`, and `blocked_model_comparison_20260916_v2`
+  under `data/eval/`. The previous `reason_codes/episode_v2/` is retained.
+  `data/model/reason_codes/final/` and the mixed-v2 July ledger are preserved rollback
+  artifacts. Load serialized models only from a trusted archive.
 - `data/eval/july_2026_reason_codes/`: immutable source scores and manifest for
   `final_reason_codes.py july-mixed`. That command also requires the original
   frozen model, binary gate, and

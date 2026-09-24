@@ -17,14 +17,14 @@ JULY_START = pd.Timestamp("2026-07-01T00:00:00Z")
 JULY_END = pd.Timestamp("2026-07-31T23:00:00Z")
 FROZEN_STATISTICS_END = pd.Timestamp("2026-06-30T23:00:00Z")
 FROZEN_STATISTICS_ROWS = 166_017
-SELECTED_DETECTOR_THRESHOLD = 0.30
+SELECTED_DETECTOR_THRESHOLD = 0.50
 JULY_HEALTH_PATH = PROJECT_ROOT / "data/eval/july_2026_health/station_health_scores_through_july.parquet"
-JULY_FORECAST_PATH = PROJECT_ROOT / "data/eval/july_2026_health_forecast/july_health_forecast_predictions.parquet"
-JULY_DETECTION_PATH = PROJECT_ROOT / "data/eval/one_hour_candidate/july_ef_hgb_binary_predictions.parquet"
+JULY_FORECAST_PATH = PROJECT_ROOT / "data/eval/final_system_release_20260924/dashboard_forecasts.parquet"
+JULY_DETECTION_PATH = PROJECT_ROOT / "data/eval/final_system_release_20260924/binary_predictions.parquet"
 JULY_SCORES_PATH = PROJECT_ROOT / "data/eval/july_2026_features/statistical_anomaly_scores.parquet"
 JULY_NEIGHBORS_PATH = PROJECT_ROOT / "data/eval/july_2026_features/spatial_neighbors.csv"
-JULY_REASON_PATH = PROJECT_ROOT / "data/eval/july_2026_reason_codes_mixed_v2/reason_code_predictions.parquet"
-JULY_WEATHER_NOTES_PATH = PROJECT_ROOT / "data/eval/july_2026_weather_annotations/weather_annotations.parquet"
+JULY_REASON_PATH = PROJECT_ROOT / "data/eval/final_system_release_20260924/reasons/reason_code_predictions.parquet"
+JULY_WEATHER_NOTES_PATH = PROJECT_ROOT / "data/eval/final_system_release_20260924/weather_annotations.parquet"
 HEALTH_COMPONENT_COLUMNS = {
     "Availability": "weighted_health_availability",
     "Sensor completeness": "weighted_health_sensor_completeness",
@@ -281,10 +281,14 @@ def build_replay_snapshot(bundle: ReplayBundle, reference_hour: object) -> pd.Da
     return snapshot.sort_values(["health_total", "station_id"]).reset_index(drop=True)
 
 
-def station_history(bundle: ReplayBundle, station_id: str, reference_hour: object) -> pd.DataFrame:
+def station_history(
+    bundle: ReplayBundle, station_id: str, reference_hour: object,
+    lookback_hours: int | None = 72,
+) -> pd.DataFrame:
     hour = _timestamp(reference_hour)
+    start = bundle.health["hour_utc"].min() if lookback_hours is None else hour - pd.Timedelta(hours=lookback_hours - 1)
     return bundle.health.loc[
-        bundle.health["station_id"].eq(station_id) & bundle.health["hour_utc"].between(hour - pd.Timedelta(hours=71), hour),
+        bundle.health["station_id"].eq(station_id) & bundle.health["hour_utc"].between(start, hour),
         ["hour_utc", "health_total"],
     ].copy()
 

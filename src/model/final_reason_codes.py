@@ -1,4 +1,4 @@
-"""Frozen, current-hour EF-HGB reason heads behind the selected binary detector.
+"""Frozen EF-HGB reason heads behind the selected binary detector.
 
 Training references are weak/evidence-derived. Inference never reads labels or
 episode IDs. Scores are model scores, not calibrated diagnostic probabilities.
@@ -25,6 +25,13 @@ VERSION = "current-hour-ef-hgb-v1"
 OUTPUT_POLICY_VERSION = "mixed-reason-output-v2"
 LEGACY_THRESHOLD_POLICY = {"mechanism": "threshold", "component": "threshold"}
 MIXED_OUTPUT_POLICY = {"mechanism": "minimum_one", "component": "threshold"}
+EPISODE_VERSION = "episode-target-ef-hgb-v2"
+SELECTED_VERSION = "validation-selected-episode-reasons-v3"
+EPISODE_OUTPUT_POLICY = {"mechanism": "minimum_one", "component": "minimum_one"}
+EPISODE_MODEL_DIR = ROOT / "data/model/reason_codes/episode_v2"
+ACTIVE_MODEL_DIR = ROOT / "data/model/final_system_20260924/reasons"
+ACTIVE_JULY_DIR = ROOT / "data/eval/final_system_release_20260924"
+JULY_EPISODE_OUTPUT = ROOT / "data/eval/july_2026_reason_codes_episode_v2"
 FREEZE = pd.Timestamp("2026-06-30T23:00:00Z")
 MODEL_DIR = ROOT / "data/model/reason_codes/final"
 JULY_OUTPUT = ROOT / "data/eval/july_2026_reason_codes"
@@ -172,7 +179,7 @@ def apply_output_policy(scores, thresholds, gate, mode="threshold"):
 
 def predict(features, detections, bundle, output_policy=None):
     """Only operational gate columns are consumed; each row uses its own hour."""
-    if bundle["version"] != VERSION:
+    if bundle["version"] not in {VERSION, EPISODE_VERSION, SELECTED_VERSION}:
         raise ValueError("Unsupported reason-code model version")
     if set(features.columns) != set(bundle["feature_names"]):
         raise ValueError("Reason-code feature schema mismatch")
@@ -187,7 +194,8 @@ def predict(features, detections, bundle, output_policy=None):
         raise ValueError("Detection rows lack observation history")
     x = features.reindex(index)[bundle["feature_names"]].to_numpy("float32")
     gate = out.random_prediction.eq(1).to_numpy()
-    policy = dict(LEGACY_THRESHOLD_POLICY if output_policy is None else output_policy)
+    default_policy = EPISODE_OUTPUT_POLICY if bundle["version"] in {EPISODE_VERSION, SELECTED_VERSION} else LEGACY_THRESHOLD_POLICY
+    policy = dict(default_policy if output_policy is None else output_policy)
     if set(policy) != {"mechanism", "component"}:
         raise ValueError("Output policy must define mechanism and component")
     with threadpool_limits(limits=2):
@@ -208,8 +216,9 @@ def predict(features, detections, bundle, output_policy=None):
             out[f"likely_{axis}s"] = [" | ".join(np.asarray(labels)[row]) for row in predictions]
             out[f"{axis}_status"] = np.where(~gate, "not_applicable",
                 np.where(predictions.any(axis=1), "likely", "insufficient_evidence"))
-    out["reason_model_version"] = VERSION
+    out["reason_model_version"] = bundle["version"]
     out["reason_output_policy_version"] = (
+        "minimum-one-both-v3" if policy == EPISODE_OUTPUT_POLICY else
         OUTPUT_POLICY_VERSION if policy == MIXED_OUTPUT_POLICY else "legacy-per-code-threshold-v1"
     )
     return out
@@ -280,8 +289,8 @@ def rescore_saved_july_mixed(output=JULY_MIXED_OUTPUT, source=JULY_OUTPUT):
     print(json.dumps(manifest, indent=2), flush=True)
 
 
-def score(raw_path, reference_path, detection_path, output, model_dir=MODEL_DIR, output_policy=None):
-    """Score a period; direct API callers default to historical thresholds."""
+def score(raw_path, reference_path, detection_path, output, model_dir=ACTIVE_MODEL_DIR, output_policy=None):
+    """Score a period using version-aware defaults; preserve legacy reproduction."""
     output, model_dir = Path(output), Path(model_dir)
     if output.exists():
         raise FileExistsError(f"Refusing to overwrite scored release: {output}")
@@ -294,7 +303,8 @@ def score(raw_path, reference_path, detection_path, output, model_dir=MODEL_DIR,
     detections["hour_utc"] = pd.to_datetime(detections.hour_utc, utc=True)
     raw = load_observations(raw_path, reference_path, detections.hour_utc.max())
     features, _ = build_features(raw)
-    policy = LEGACY_THRESHOLD_POLICY if output_policy is None else output_policy
+    default_policy = EPISODE_OUTPUT_POLICY if bundle["version"] in {EPISODE_VERSION, SELECTED_VERSION} else LEGACY_THRESHOLD_POLICY
+    policy = default_policy if output_policy is None else output_policy
     result = predict(features, detections, bundle, output_policy=policy)
     # Delete-the-future check on every station at a middle scoring timestamp.
     cutoff = detections.hour_utc.sort_values().iloc[len(detections) // 2]
@@ -305,8 +315,8 @@ def score(raw_path, reference_path, detection_path, output, model_dir=MODEL_DIR,
     output.mkdir(parents=True, exist_ok=False)
     result.to_parquet(output / "reason_code_predictions.parquet", index=False)
     alert = result.random_prediction.eq(1)
-    report = dict(version=VERSION, model_sha256=manifest["model_sha256"],
-        output_policy_version=(OUTPUT_POLICY_VERSION if policy == MIXED_OUTPUT_POLICY else "legacy-per-code-threshold-v1"),
+    report = dict(version=bundle["version"], model_sha256=manifest["model_sha256"],
+        output_policy_version=str(result.reason_output_policy_version.iloc[0]),
         output_policy=dict(policy),
         input_hashes={"raw": sha(Path(raw_path)), "references": sha(Path(reference_path)), "detections": sha(Path(detection_path))},
         first_hour=str(result.hour_utc.min()), last_hour=str(result.hour_utc.max()),
@@ -323,24 +333,27 @@ def score(raw_path, reference_path, detection_path, output, model_dir=MODEL_DIR,
 def main(argv=None):
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["train", "july", "july-mixed", "score"])
-    parser.add_argument("--model-dir", type=Path, default=MODEL_DIR)
+    parser.add_argument("--model-dir", type=Path, default=None)
     parser.add_argument("--raw", type=Path)
     parser.add_argument("--references", type=Path)
     parser.add_argument("--detections", type=Path)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--output-policy", choices=["mixed", "threshold"], default="mixed",
-        help="CLI release policy (default: mixed); Python APIs retain threshold defaults")
+    parser.add_argument("--output-policy", choices=["minimum-one", "mixed", "threshold"], default="minimum-one",
+        help="Active release requires at least one mechanism and component")
     args = parser.parse_args(argv)
     if args.action == "train":
-        train(args.model_dir)
+        if args.model_dir is None or args.model_dir.resolve() == ACTIVE_MODEL_DIR.resolve():
+            parser.error("Legacy train requires a separate --model-dir. The active selection workflow is scripts/stage_final_selected_system.py reasons.")
+        from src.model.episode_reason_release import train_episode_release
+        train_episode_release(args.model_dir)
     elif args.action == "july":
-        policy = MIXED_OUTPUT_POLICY if args.output_policy == "mixed" else LEGACY_THRESHOLD_POLICY
-        default_output = JULY_MIXED_OUTPUT if args.output_policy == "mixed" else JULY_OUTPUT
-        score(JULY_RAW, JULY_REFS, JULY_GATE, args.output or default_output, args.model_dir, policy)
+        policy = {"minimum-one": EPISODE_OUTPUT_POLICY, "mixed": MIXED_OUTPUT_POLICY, "threshold": LEGACY_THRESHOLD_POLICY}[args.output_policy]
+        default_output = ACTIVE_JULY_DIR / ("reasons" if args.output_policy == "minimum-one" else "reasons_" + args.output_policy)
+        score(JULY_RAW, JULY_REFS, args.detections or ACTIVE_JULY_DIR / "binary_predictions.parquet", args.output or default_output, args.model_dir or ACTIVE_MODEL_DIR, policy)
     elif args.action == "july-mixed":
         rescore_saved_july_mixed(args.output or JULY_MIXED_OUTPUT)
     else:
         if not all((args.raw, args.references, args.detections, args.output)):
             parser.error("score requires --raw, --references, --detections and --output")
-        policy = MIXED_OUTPUT_POLICY if args.output_policy == "mixed" else LEGACY_THRESHOLD_POLICY
-        score(args.raw, args.references, args.detections, args.output, args.model_dir, policy)
+        policy = {"minimum-one": EPISODE_OUTPUT_POLICY, "mixed": MIXED_OUTPUT_POLICY, "threshold": LEGACY_THRESHOLD_POLICY}[args.output_policy]
+        score(args.raw, args.references, args.detections, args.output, args.model_dir or ACTIVE_MODEL_DIR, policy)

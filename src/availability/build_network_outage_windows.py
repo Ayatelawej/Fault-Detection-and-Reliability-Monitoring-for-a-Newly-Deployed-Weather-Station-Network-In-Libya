@@ -26,13 +26,10 @@ WINDOW_COLUMNS = [
     "total_duration_hours",
 ]
 
-OUTAGE_CLASS_NETWORK_MIDNIGHT = "network_midnight"
-OUTAGE_CLASS_NETWORK_OTHER = "network_other"
+OUTAGE_CLASS_COORDINATED = "coordinated"
 OUTAGE_CLASS_LOCAL = "local"
-NETWORK_OUTAGE_CLASSES = {
-    OUTAGE_CLASS_NETWORK_MIDNIGHT,
-    OUTAGE_CLASS_NETWORK_OTHER,
-}
+NETWORK_OUTAGE_CLASSES = {OUTAGE_CLASS_COORDINATED}
+LEGACY_NETWORK_OUTAGE_CLASSES = {"network_midnight", "network_other"}
 
 
 def _empty_windows_frame() -> pd.DataFrame:
@@ -96,11 +93,8 @@ def _prepared_events(events: pd.DataFrame) -> pd.DataFrame:
 
 
 def _window_outage_class(window_start_utc: pd.Timestamp) -> str:
-    if pd.isna(window_start_utc):
-        return OUTAGE_CLASS_NETWORK_OTHER
-    if window_start_utc.hour in {22, 23}:
-        return OUTAGE_CLASS_NETWORK_MIDNIGHT
-    return OUTAGE_CLASS_NETWORK_OTHER
+    """Shared timing is descriptive; clock hour does not establish a cause."""
+    return OUTAGE_CLASS_COORDINATED
 
 
 def _count_cluster_stations(
@@ -266,6 +260,8 @@ def assign_outage_class(
 
     for row in ranges.itertuples(index=False):
         outage_class = getattr(row, "outage_class", None)
+        if outage_class in LEGACY_NETWORK_OUTAGE_CLASSES:
+            outage_class = OUTAGE_CLASS_COORDINATED
         if outage_class not in NETWORK_OUTAGE_CLASSES:
             continue
         in_window = (
@@ -288,8 +284,7 @@ def _print_summary(events: pd.DataFrame, windows: pd.DataFrame) -> None:
         .value_counts()
         .reindex(
             [
-                OUTAGE_CLASS_NETWORK_MIDNIGHT,
-                OUTAGE_CLASS_NETWORK_OTHER,
+                OUTAGE_CLASS_COORDINATED,
                 OUTAGE_CLASS_LOCAL,
             ],
             fill_value=0,

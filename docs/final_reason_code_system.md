@@ -1,5 +1,9 @@
 # Final system: current-hour reason codes
 
+> Superseded on 24 September 2026 by the [episode-target release](episode_reason_deployment.md).
+> The text below documents the preserved previous release and its historical scores,
+> not the active dashboard model. The active release requires both mechanism and component.
+
 The final July replay now combines the unchanged selected one-hour EF-HGB fault
 detector, separately fitted EF-HGB mechanism/component heads, causal health,
 availability, and the existing frozen health forecasts. Reason predictions

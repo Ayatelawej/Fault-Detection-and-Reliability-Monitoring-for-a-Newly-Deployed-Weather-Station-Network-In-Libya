@@ -90,23 +90,19 @@ EXPECTED_STRUCTURAL_GAP_COUNT = 4
 EXPECTED_STRUCTURAL_GAP_HOURS = 1_454
 EXPECTED_OUTAGE_CLASSES = {
     "local",
-    "network_midnight",
-    "network_other",
+    "coordinated",
     "unknown",
 }
 EXPECTED_FINAL_OUTAGE_CLASSES = {
     "local",
-    "network_midnight",
-    "network_other",
+    "coordinated",
 }
 EXPECTED_NETWORK_OUTAGE_CLASSES = {
-    "network_midnight",
-    "network_other",
+    "coordinated",
 }
 EXPECTED_OUTAGE_CLASS_COUNTS = {
     "local": 1_968,
-    "network_midnight": 267,
-    "network_other": 163,
+    "coordinated": 430,
 }
 
 
@@ -438,20 +434,10 @@ def test_network_outage_windows_have_expected_classes(
     )
 
 
-def test_network_outage_window_class_matches_start_hour(
+def test_coordinated_outage_class_does_not_depend_on_start_hour(
     network_outage_windows_df: pd.DataFrame,
 ) -> None:
-    window_start_utc = pd.to_datetime(
-        network_outage_windows_df["window_start_utc"],
-        utc=True,
-        errors="coerce",
-    )
-    expected_classes = window_start_utc.dt.hour.apply(
-        lambda hour: "network_midnight"
-        if hour in {22, 23}
-        else "network_other"
-    )
-    assert network_outage_windows_df["outage_class"].eq(expected_classes).all()
+    assert network_outage_windows_df["outage_class"].eq("coordinated").all()
 
 
 def test_network_outage_windows_station_count_threshold(
@@ -522,7 +508,7 @@ def test_network_events_fall_in_window_ranges(
 
 @pytest.mark.parametrize(
     "outage_class",
-    ["network_midnight", "network_other"],
+    ["coordinated"],
 )
 def test_network_events_fall_in_matching_window_ranges(
     availability_events_df: pd.DataFrame,

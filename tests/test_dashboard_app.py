@@ -52,3 +52,34 @@ def test_dashboard_starts_and_renders_mid_july_hour_400():
     app.sidebar.select_slider[0].set_value(400).run(timeout=30)
     assert not app.exception
     assert app.session_state["replay_index"] == 400
+    assert len(app.dataframe[0].value) == 26
+    assert all(f"+{h} h" in app.dataframe[0].value for h in (1, 3, 6, 12, 24))
+    captions = " ".join(item.value for item in app.caption)
+    assert "mutually exclusive" not in captions
+    assert "Selected EF-HGB" not in captions
+    assert "Full-outage rows show" not in captions
+    assert "Recorded observations" not in " ".join(item.value for item in app.sidebar.caption)
+
+    app.get("button_group")[0].set_value("Station").run(timeout=30)
+    assert not app.exception
+    assert {"Health", "Condition", "Fault status"}.issubset({m.label for m in app.metric})
+    assert "Fault probability" not in {m.label for m in app.metric}
+    assert all(f"+{h} hours" in {m.label for m in app.metric} for h in (1, 3, 6, 12, 24))
+    station_selector = app.selectbox(key="selected_station_id")
+    selected_id = station_selector.options[-1].split(" · ")[0]
+    station_selector.set_value(selected_id).run(timeout=30)
+    assert not app.exception
+
+    app.get("button_group")[0].set_value("Evidence").run(timeout=30)
+    assert not app.exception
+    headings = " ".join(item.value for item in app.markdown)
+    assert "Weather reference comparison" in headings and "Nearby stations" in headings
+
+    app.get("button_group")[0].set_value("Station").run(timeout=30)
+    assert not app.exception
+    assert app.session_state["selected_station_id"] == selected_id
+    app.sidebar.button[2].click().run(timeout=30)
+    assert not app.exception
+    assert app.session_state["replay_index"] == 401
+    app.sidebar.button[0].click().run(timeout=30)
+    assert app.session_state["replay_index"] == 400

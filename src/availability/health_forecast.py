@@ -938,6 +938,7 @@ class FittedHealthForecastModel:
     feature_set: str | None = None
     recency_half_life_days: int | None = None
     iterations: int | None = None
+    residual_baseline: str = "no_new_incident_roll_forward"
 
     def predict(self, frame: pd.DataFrame) -> np.ndarray:
         if self.family == "hist_gradient_boosting":
@@ -950,13 +951,17 @@ class FittedHealthForecastModel:
         return np.asarray(self.estimator.predict(source), dtype=float).reshape(-1)
 
     def predict_health(self, frame: pd.DataFrame) -> np.ndarray:
+        if self.final_policy == "direct_regression":
+            return np.clip(self.predict(frame), 0.0, 100.0)
         if self.final_policy in {
             "persistence",
             "recent_trend_24h",
             "no_new_incident_roll_forward",
         }:
             return _baseline_level_predictions(frame)[self.final_policy]
-        return _health_from_residual(frame, self.predict(frame), self.alpha)
+        baseline_name = getattr(self, "residual_baseline", "no_new_incident_roll_forward")
+        baseline = _baseline_level_predictions(frame)[baseline_name]
+        return np.clip(baseline + float(self.alpha) * self.predict(frame), 0.0, 100.0)
 
     def predict_delta(self, frame: pd.DataFrame) -> np.ndarray:
         current = pd.to_numeric(frame["health_total"], errors="coerce").to_numpy(dtype=float)

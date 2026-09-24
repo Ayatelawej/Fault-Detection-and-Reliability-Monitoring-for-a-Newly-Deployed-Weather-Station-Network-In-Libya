@@ -1,0 +1,25 @@
+/* Reserve space for Streamlit's fixed toolbar, including at narrow widths. */
+.stMainBlockContainer { max-width: 1500px; padding-top: 6rem; padding-bottom: 3rem; }
+[data-testid="stSidebar"] { border-right: 1px solid #dbe3ec; }
+h1, h2, h3 { color: #20364d; letter-spacing: -.025em; }
+[data-testid="stMetric"] { background: white; border: 1px solid #dbe3ec; border-radius: 12px; padding: 14px 18px; }
+[data-testid="stMetricValue"] { font-size: 1.5rem; }
+[data-testid="stDataFrame"] { border-radius: 10px; }
+.monitor-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }
+.monitor-eyebrow { color: #526981; font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.monitor-header h1 { font-size: 2rem; margin: .3rem 0 0; padding: 0; font-weight: 650; }
+.monitor-clock { text-align: right; background: #fff; border: 1px solid #dbe3ec; padding: 12px 18px; border-radius: 12px; min-width: 240px; }
+.monitor-clock .time { display: block; font-size: 1.45rem; font-weight: 650; font-variant-numeric: tabular-nums; color: #20364d; }
+.monitor-clock .date { color: #526981; font-size: .88rem; }
+.monitor-clock .state { font-size: .74rem; color: #167d8d; font-weight: 650; }
+.health-part { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 0 0 17px; }
+.health-part .label { font-weight: 600; }
+.health-part .points { font-variant-numeric: tabular-nums; font-weight: 650; color: #167d8d; }
+.health-part .track { grid-column: 1 / -1; height: 7px; background: #e6edf3; border-radius: 8px; overflow: hidden; }
+.health-part .fill { height: 100%; background: #167d8d; border-radius: 8px; }
+.health-part .meaning { grid-column: 1 / -1; color: #526981; font-size: .83rem; }
+@media (max-width: 700px) {
+  .monitor-header { align-items: stretch; flex-direction: column; }
+  .monitor-clock { text-align: left; min-width: 0; }
+  .stMainBlockContainer { padding: 5.5rem 1rem 3rem; }
+}

@@ -1,0 +1,10 @@
+{
+  "model": "EF-HGB",
+  "threshold": 0.5,
+  "validation_minimum": 0.8960138648180243,
+  "training_rows": 130218,
+  "training_fault_hours": 9260,
+  "trained_through": "2026-06-30 23:00:00+00:00",
+  "model_sha256": "3e5ea616076e2d3af290772e7c465e8c8c882ff01aa75981cc34b0d0c0b1a39a",
+  "limitations": "Original historical 67-feature pipeline including retrospective stuck indicators; no claim that causal binary limitations are repaired."
+}

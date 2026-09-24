@@ -1,0 +1,90 @@
+[
+  {
+    "horizon_h": 1,
+    "model": "CatBoost",
+    "validation_mae": 1.187952084196057,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_1h.joblib",
+    "sha256": "1ac8f57ead9536158e6df05ffe2b111e1fd65889da1c75d0c10a346d8c63cdc6",
+    "train_rows": 127659
+  },
+  {
+    "horizon_h": 3,
+    "model": "CatBoost",
+    "validation_mae": 2.440769080400756,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_3h.joblib",
+    "sha256": "5c0c6b62ea9e8aa2c728a8b4019c5bda5217bb8dbcda9c44568b5df19907f3d6",
+    "train_rows": 127637
+  },
+  {
+    "horizon_h": 6,
+    "model": "CatBoost",
+    "validation_mae": 3.5182143787333784,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_6h.joblib",
+    "sha256": "cf9b6e74d5710057ada96f0c3d4876fd14baf5038e87f61ce3b96aa5b4483d30",
+    "train_rows": 127568
+  },
+  {
+    "horizon_h": 12,
+    "model": "CatBoost",
+    "validation_mae": 5.06956090978788,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_12h.joblib",
+    "sha256": "36938526adfd9c91f103823701c8c0a3df68ca423b2ccd2a3e4344e6b91839df",
+    "train_rows": 127444
+  },
+  {
+    "horizon_h": 24,
+    "model": "CatBoost",
+    "validation_mae": 6.431601276178971,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_24h.joblib",
+    "sha256": "0972caa21530ccb81e98309183b4e09b48a312889fb84aca16e23a8e05a554bb",
+    "train_rows": 127181
+  },
+  {
+    "horizon_h": 48,
+    "model": "CatBoost",
+    "validation_mae": 7.711534163099943,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_48h.joblib",
+    "sha256": "9ab25088e26fef6e9bb381dda5f7367320f671e4263d24b3889a41dbc3bb318d",
+    "train_rows": 126648
+  },
+  {
+    "horizon_h": 72,
+    "model": "CatBoost",
+    "validation_mae": 8.2422846498724,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_72h.joblib",
+    "sha256": "07220d0ffdebcc3448f1b337c339e87dee2d74e8303946fac889d74b4120dfc4",
+    "train_rows": 126131
+  },
+  {
+    "horizon_h": 96,
+    "model": "Ridge",
+    "validation_mae": 8.631816618786035,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_96h.joblib",
+    "sha256": "d94c749e720c71e728fb64b286191f0efede3c4fd6113845ba57045baad0e1a5",
+    "train_rows": 125645
+  },
+  {
+    "horizon_h": 120,
+    "model": "CatBoost",
+    "validation_mae": 9.115928315382105,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_120h.joblib",
+    "sha256": "c49ba70627b8f82486bd9165eb1f1b3e0a8e534e9baccd18926c4c1d510cca8f",
+    "train_rows": 125135
+  },
+  {
+    "horizon_h": 144,
+    "model": "HGB",
+    "validation_mae": 9.701429070460444,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_144h.joblib",
+    "sha256": "a89351f43075a04469a363247b413e3321b33dbb2b8deafe93514b497446419e",
+    "train_rows": 124650
+  },
+  {
+    "horizon_h": 168,
+    "model": "CatBoost",
+    "validation_mae": 9.913138635089876,
+    "path": "data\\model\\final_system_20260924\\forecasts\\health_forecast_forecast_transmitting_origin_168h.joblib",
+    "sha256": "bfbc052258714a688d064107a2e51a168e3a22ebafe86be7372dd7197c682828",
+    "train_rows": 124163
+  }
+]

@@ -22,6 +22,7 @@ data/discovery/raw/
 .DS_Store
 Thumbs.db
 ~$*
+~WRL*.tmp
 data/processed/statistical_anomaly_scores.parquet
 data/processed/fault_events.parquet
 data/processed/fault_episodes.parquet
@@ -41,7 +42,6 @@ outputs/eda/
 *.zip
 outputs/report_revision/
 
-# Personal learning and study artifacts
 /docs/STUDY_GUIDE.md
 /docs/CODE_INVENTORY.md
 /docs/DEMO_GUIDE.md

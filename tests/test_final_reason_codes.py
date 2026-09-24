@@ -64,14 +64,15 @@ def test_output_policy_keeps_threshold_multilabel_and_rejects_bad_inputs():
         apply_output_policy(scores, [.6, .6], gate, "forced")
 
 
-def test_cli_score_defaults_mixed_while_direct_predict_defaults_threshold(monkeypatch, tmp_path):
+def test_cli_score_defaults_episode_while_legacy_predict_defaults_threshold(monkeypatch, tmp_path):
     x, gate, bundle = fixture_inputs(.2)
     assert predict(x, gate, bundle).mechanism_status.iloc[1] == "insufficient_evidence"
     called = {}
     monkeypatch.setattr(final_reason_codes, "score", lambda *args: called.update(args=args))
     final_reason_codes.main(["score", "--raw", str(tmp_path / "raw"), "--references", str(tmp_path / "refs"),
         "--detections", str(tmp_path / "gate"), "--output", str(tmp_path / "out")])
-    assert called["args"][-1] == final_reason_codes.MIXED_OUTPUT_POLICY
+    assert called["args"][-1] == final_reason_codes.EPISODE_OUTPUT_POLICY
+    assert called["args"][-2] == final_reason_codes.ACTIVE_MODEL_DIR
 
 
 def test_july_cli_policy_selects_versioned_defaults(monkeypatch):
@@ -79,10 +80,22 @@ def test_july_cli_policy_selects_versioned_defaults(monkeypatch):
     monkeypatch.setattr(final_reason_codes, "score", lambda *args: calls.append(args))
     final_reason_codes.main(["july"])
     final_reason_codes.main(["july", "--output-policy", "threshold"])
-    assert calls[0][3] == final_reason_codes.JULY_MIXED_OUTPUT
-    assert calls[0][-1] == final_reason_codes.MIXED_OUTPUT_POLICY
-    assert calls[1][3] == final_reason_codes.JULY_OUTPUT
+    assert calls[0][2] == final_reason_codes.ACTIVE_JULY_DIR / "binary_predictions.parquet"
+    assert calls[0][3] == final_reason_codes.ACTIVE_JULY_DIR / "reasons"
+    assert calls[0][-1] == final_reason_codes.EPISODE_OUTPUT_POLICY
+    assert calls[1][3] == final_reason_codes.ACTIVE_JULY_DIR / "reasons_threshold"
     assert calls[1][-1] == final_reason_codes.LEGACY_THRESHOLD_POLICY
+
+
+def test_episode_bundle_defaults_minimum_one_both_without_truth():
+    x, gate, bundle = fixture_inputs(.2)
+    bundle['version'] = final_reason_codes.EPISODE_VERSION
+    result = predict(x, gate.assign(truth_fault=0, source_episode_ids='unused'), bundle)
+    assert result.likely_mechanisms.tolist() == ['', 'spike_impossible', 'spike_impossible']
+    assert result.likely_components.tolist() == ['', 'barometer', 'barometer']
+    assert result.reason_model_version.eq(final_reason_codes.EPISODE_VERSION).all()
+    assert result.reason_output_policy_version.eq('minimum-one-both-v3').all()
+    pd.testing.assert_frame_equal(result.iloc[:2], predict(x.iloc[:2], gate.iloc[:2], bundle))
 
 
 def test_saved_mixed_rescore_rejects_unvalidated_source_manifest(monkeypatch, tmp_path):

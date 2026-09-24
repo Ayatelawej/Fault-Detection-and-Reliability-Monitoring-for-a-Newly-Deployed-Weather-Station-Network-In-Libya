@@ -1,0 +1,72 @@
+{
+  "forecasts": [
+    {
+      "horizon_h": 1,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 3,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 6,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 12,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 24,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 48,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 72,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 96,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 120,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 144,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    },
+    {
+      "horizon_h": 168,
+      "rows": 490,
+      "prefix_invariant": true,
+      "serialized_parity": true
+    }
+  ],
+  "dashboard_gate_joins": true,
+  "validation_selection": true
+}
