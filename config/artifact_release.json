@@ -1,0 +1,8 @@
+{
+  "version": "final-system-20260924-packaged-20261004-trimmed",
+  "filename": "EC499-artifacts-20260924-20261004-trimmed.zip",
+  "bytes": 596302354,
+  "sha256": "4203cfb9c9c83c521313e413bdcbf400a31ec283ee7cd259257dfc5e03cd0457",
+  "artifact_files": 858,
+  "scope": "Frozen hourly inputs, labels, references, models and retained comparison artifacts. Source and tracked figures are supplied separately; original five-minute acquisition/manual adjudication are outside this package."
+}

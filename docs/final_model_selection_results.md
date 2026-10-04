@@ -1,6 +1,6 @@
 # Final model comparison and selected release
 
-Completed comparisons for the main development dataset. Validation tables come first; test tables are reporting only. Logistic experiments remain archived and are not part of the requested three-model classification comparison.
+Completed comparisons for the main development dataset. Validation tables come first; test tables are reporting only. The classification comparison covers HGB, EF-HGB and RGFN.
 
 ## Selection and interpretation
 
@@ -285,6 +285,6 @@ Reason RGFN is a new single-seed adaptation of the existing one-hour MLP gated a
 
 Forecasts share feature scope, recency settings and baseline at each horizon. HGB/CatBoost search 100/200/300 iterations and direct versus residual prediction; linear/Ridge reproduce the earlier validation-selected grid. This is not an exhaustive feature search. At 1h the linear candidates select zero correction, so their output is the standalone baseline.
 
-These development splits and July have been explored previously. July is a retrospective extension, not a newly untouched external validation. Archived weather-reference arrival-time availability remains unverified. Grouped/spaced results and logistic tests remain archived as supplementary experiments; they were not deleted.
+These development splits and July have been explored previously. July is a retrospective extension, not a newly untouched external validation. Archived weather-reference arrival-time availability remains unverified. Grouped/spaced comparisons are retained as supplementary results. Obsolete exploratory scripts and logistic classification experiments were removed from the submission checkout; a recoverable external snapshot preserves their history.
 
-Release paths: `data/model/final_system_20260924/` and `data/eval/final_system_release_20260924/`. Previous releases remain available for rollback. This document supplies replacement report tables; the user’s Word report has not been rewritten.
+Release paths: `data/model/final_system_20260924/` and `data/eval/final_system_release_20260924/`. Required earlier forecast templates are retained as reproduction inputs; other historical artifacts are recoverable from the external cleanup snapshot. This document supplies replacement report tables; the user’s Word report has not been rewritten.

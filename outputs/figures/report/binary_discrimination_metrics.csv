@@ -1,0 +1,3 @@
+population,rows,threshold,auroc,average_precision,tn,fp,fn,tp
+Standard-holdout development test,19533,0.3,0.9976634805723478,0.981103985528889,18024,120,103,1286
+July: deployed full-development refit,13565,0.5,0.9815735498098577,0.8847570106909882,11497,367,410,1291

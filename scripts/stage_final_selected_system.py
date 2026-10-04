@@ -13,9 +13,9 @@ from src.model.hourly_baseline import load_hourly_tensor,flatten_hourly_features
 from src.model.reason_code_rebuild import MECH,COMP,fit_estimator,sha
 from src.model.final_reason_codes import FREEZE,load_observations,build_features,JULY_RAW,JULY_REFS
 from src.model.reason_rgfn_adapter import ReasonRgfnEstimator
-from scripts.final_reason_model_comparison import balanced
+from src.workflows.compare_reasons import balanced
 from src.availability import health_forecast as hf
-from scripts.final_forecast_model_comparison import metrics as forecast_metrics
+from src.workflows.compare_forecasts import metrics as forecast_metrics
 
 OUT=ROOT/'data/eval/final_system_release_20260924'
 MODELS=ROOT/'data/model/final_system_20260924'
@@ -127,7 +127,7 @@ def evaluate_reasons():
     bundle=joblib.load(MODELS/'reasons/reason_heads.joblib')
     features,_=build_features(load_observations(JULY_RAW,JULY_REFS,gate.hour_utc.max()))
     oracle=predict(features,gate.assign(random_prediction=1),bundle)
-    # Read targets only after predictions are fixed.
+
     ep=pd.read_csv(ROOT/'data/eval/july_2026_adjudicated_labels/episode_labels_adjudicated.csv')
     for c in ('start_hour','end_hour'):ep[c]=pd.to_datetime(ep[c],utc=True)
     ep=ep[ep.label_state.eq('fault')&ep.end_hour.ge(gate.hour_utc.min())&ep.start_hour.le(gate.hour_utc.max())]
@@ -147,11 +147,11 @@ def evaluate_reasons():
             _,ss=multilabel_rows(y[mask,offset:offset+len(labels)],pp[mask],gate.source_episode_ids.to_numpy()[mask],labels,dict(axis=axis,scope=scope))
             rows.append(ss)
     pd.DataFrame(rows).to_csv(OUT/'july_reason_metrics.csv',index=False)
-    # Reapply unchanged annotation conditions to the new gate; never suppress alerts.
-    from scripts.investigate_july_temperature import guard_masks
+
+    from src.dashboard.weather_context import guard_masks
     cols=['station_id','hour_utc','temp_low_c_past_hour_z','temp_avg_c_past_hour_z','temp_high_c_past_hour_z',
         'r_temp_past_z','r_spatial_temp_past_z','physical_or_confirmed_stuck','temperature_stat','other_stat']
-    context=pd.read_parquet(ROOT/'data/eval/july_temperature_investigation/july_shadow_predictions.parquet',columns=cols)
+    context=pd.read_parquet(ROOT/'data/features/july_weather_context.parquet',columns=cols)
     pd.testing.assert_frame_equal(context[['station_id','hour_utc']],gate[['station_id','hour_utc']])
     notes=gate[['station_id','hour_utc','random_probability','random_prediction']].copy()
     flag=guard_masks(context)['temperature_context_reference_and_peers'].to_numpy()&alert

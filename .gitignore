@@ -38,7 +38,8 @@ docs/report_drafts/
 outputs/exports/
 outputs/eda/
 *.docx
-!docs/report/Ayat_Elawej_EC499_Report_FINAL.docx
+/docs/report/
+/CODE_MAP.md
 *.zip
 outputs/report_revision/
 

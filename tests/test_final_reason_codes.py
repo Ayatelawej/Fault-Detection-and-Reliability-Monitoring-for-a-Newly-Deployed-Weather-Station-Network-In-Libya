@@ -75,16 +75,16 @@ def test_cli_score_defaults_episode_while_legacy_predict_defaults_threshold(monk
     assert called["args"][-2] == final_reason_codes.ACTIVE_MODEL_DIR
 
 
-def test_july_cli_policy_selects_versioned_defaults(monkeypatch):
+def test_july_cli_uses_final_policy_and_rejects_retired_override(monkeypatch):
     calls = []
     monkeypatch.setattr(final_reason_codes, "score", lambda *args: calls.append(args))
     final_reason_codes.main(["july"])
-    final_reason_codes.main(["july", "--output-policy", "threshold"])
+    with pytest.raises(SystemExit):
+        final_reason_codes.main(["july", "--output-policy", "threshold"])
     assert calls[0][2] == final_reason_codes.ACTIVE_JULY_DIR / "binary_predictions.parquet"
     assert calls[0][3] == final_reason_codes.ACTIVE_JULY_DIR / "reasons"
     assert calls[0][-1] == final_reason_codes.EPISODE_OUTPUT_POLICY
-    assert calls[1][3] == final_reason_codes.ACTIVE_JULY_DIR / "reasons_threshold"
-    assert calls[1][-1] == final_reason_codes.LEGACY_THRESHOLD_POLICY
+    assert len(calls) == 1
 
 
 def test_episode_bundle_defaults_minimum_one_both_without_truth():
@@ -98,20 +98,6 @@ def test_episode_bundle_defaults_minimum_one_both_without_truth():
     pd.testing.assert_frame_equal(result.iloc[:2], predict(x.iloc[:2], gate.iloc[:2], bundle))
 
 
-def test_saved_mixed_rescore_rejects_unvalidated_source_manifest(monkeypatch, tmp_path):
-    model_dir = tmp_path / "model"
-    source = tmp_path / "source"
-    model_dir.mkdir(); source.mkdir()
-    model = model_dir / "reason_heads.joblib"
-    gate = tmp_path / "gate.parquet"
-    model.write_bytes(b"frozen model"); gate.write_bytes(b"frozen gate")
-    (model_dir / "manifest.json").write_text(json.dumps({"model_sha256": final_reason_codes.sha(model)}))
-    (source / "scoring_manifest.json").write_text(json.dumps({
-        "model_sha256": "altered", "input_hashes": {"detections": final_reason_codes.sha(gate)}}))
-    monkeypatch.setattr(final_reason_codes, "MODEL_DIR", model_dir)
-    monkeypatch.setattr(final_reason_codes, "JULY_GATE", gate)
-    with pytest.raises(ValueError, match="different reason model"):
-        final_reason_codes.rescore_saved_july_mixed(tmp_path / "new", source)
 
 
 def test_final_reasons_reject_duplicate_or_missing_inputs():

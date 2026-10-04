@@ -12,10 +12,6 @@ from src.workflows.build_result_figures import (
     main as build_results,
     require_result_inputs,
 )
-from src.workflows.build_july_evaluation_figures import (
-    main as build_july_evaluation,
-    require_july_evaluation_inputs,
-)
 from src.config.paths import HOURLY_ROW_STATES_PATH, STATION_REGISTRY_PATH
 from src.workflows.prerequisites import require_files
 
@@ -24,7 +20,7 @@ def parse_args(argv: list[str] | None = None) -> str:
     parser = ArgumentParser(description="Generate report figure assets.")
     parser.add_argument(
         "--set",
-        choices=("methodology", "results", "july-evaluation", "all"),
+        choices=("current", "methodology", "results", "july-evaluation", "all"),
         default="methodology",
         dest="figure_set",
     )
@@ -33,6 +29,16 @@ def parse_args(argv: list[str] | None = None) -> str:
 
 def main(argv: list[str] | None = None) -> None:
     figure_set = parse_args(argv)
+    if figure_set == "july-evaluation":
+
+        from src.workflows.build_current_figures import binary, OUT
+        OUT.mkdir(parents=True, exist_ok=True)
+        binary()
+        return
+    if figure_set == "current":
+        from src.workflows.build_current_figures import main as build_current
+        build_current()
+        return
     if figure_set in {"methodology", "all"}:
         require_files(
             "Methodology figure generation",
@@ -43,14 +49,13 @@ def main(argv: list[str] | None = None) -> None:
         )
     if figure_set in {"results", "all"}:
         require_result_inputs()
-    if figure_set in {"july-evaluation", "all"}:
-        require_july_evaluation_inputs()
     if figure_set in {"methodology", "all"}:
         build_methodology()
     if figure_set in {"results", "all"}:
         build_results()
-    if figure_set in {"july-evaluation", "all"}:
-        build_july_evaluation()
+    if figure_set == "all":
+        from src.workflows.build_current_figures import main as build_current
+        build_current()
 
 
 if __name__ == "__main__":

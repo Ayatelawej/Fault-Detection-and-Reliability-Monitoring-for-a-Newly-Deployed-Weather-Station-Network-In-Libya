@@ -1,4 +1,4 @@
-"""Isolated, timestamp-aligned reason-code research; no production model writes."""
+"""Shared reason features, split utilities, head fitting and evaluation metrics."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -85,7 +85,7 @@ def features_for_station(raw: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         out[prefix+'mean24']=v.rolling(24,min_periods=12).mean()
         out[prefix+'std24']=v.rolling(24,min_periods=12).std()
     frame = pd.DataFrame(out, index=raw.index).replace([np.inf,-np.inf],np.nan).astype('float32')
-    # Mechanism views summarize channel-local evidence, without station identity.
+
     for group in COMP:
         for suffix in ('hard','stuck','past_z','delta','range24','missing'):
             cols = [c for c in frame if c.startswith(group+'::') and c.endswith('::'+suffix)]
@@ -144,7 +144,7 @@ def group_balanced_split(groups, y, original_fault, fractions=(.7,.15,.15)):
     np.add.at(stats[:,:y.shape[1]],inverse,y)
     np.add.at(stats[:,-2],inverse,original_fault)
     np.add.at(stats[:,-1],inverse,1)
-    # Code presence counts event support; hourly counts have a smaller weight.
+
     event = (stats[:,:y.shape[1]]>0).astype(float)
     values = np.c_[event,stats[:,:y.shape[1]],stats[:,-2:]]
     totals = values.sum(axis=0).clip(1)
@@ -154,11 +154,11 @@ def group_balanced_split(groups, y, original_fault, fractions=(.7,.15,.15)):
     order = np.lexsort((rng.random(len(unique)),-stats[:,-2],-rarity))
     goals = np.asarray(fractions)[:,None]*totals
     used = np.zeros_like(goals); assignment=np.zeros(len(unique),int)
-    # Incremental squared-error allocation against all class and row quotas.
+
     for g in order:
         delta = ((((used+values[g]-goals)/totals)**2-((used-goals)/totals)**2)*importance).sum(axis=1)
         k=int(delta.argmin());assignment[g]=k;used[k]+=values[g]
-    # Improve the aggregate objective by whole-group moves, without looking at scores.
+
     for _ in range(8):
         changed=0
         for g in order:
@@ -182,7 +182,7 @@ def chronological_split(hours, groups):
     category=np.select([h<a,h<b],[0,1],default=2)
     boundaries=pd.DataFrame({'g':groups,'p':category}).groupby('g').p.nunique()
     crosses=np.isin(groups,boundaries[boundaries>1].index)
-    # Seven-day history embargo; the deployment features themselves stay causal.
+
     gap=((h>=a)&(h<a+pd.Timedelta(days=7)))|((h>=b)&(h<b+pd.Timedelta(days=7)))
     return {p:np.flatnonzero((category==k)&~crosses&~gap) for k,p in enumerate(('train','validation','test'))}
 
@@ -197,7 +197,7 @@ def fit_estimator(x,y,groups,seed=SEED):
     if len(np.unique(y))<2:
         return float(y.mean()) if len(y) else 0.0
     w=event_weights(groups)
-    # Balance positive and negative total event weight, rather than repeated hours.
+
     w[y==1] *= w[y==0].sum()/max(w[y==1].sum(),1e-12)
     w/=w.mean()
     m=HistGradientBoostingClassifier(max_iter=80,max_leaf_nodes=15,min_samples_leaf=10,
@@ -213,7 +213,7 @@ def probability(model,x):
 def feature_views(names,axis,label):
     if axis=='component':
         allowed=[c for c in names if c.startswith(label+'::')]
-        # wind-speed information is explicitly scoped to direction interpretation.
+
     else:
         allowed=[c for c in names if '::value' not in c]
     full=np.array([names.index(c) for c in allowed],int)
@@ -267,158 +267,3 @@ def sha(path):
     with path.open('rb') as f:
         for block in iter(lambda:f.read(1024*1024),b''):h.update(block)
     return h.hexdigest()
-
-
-def run(output:Path):
-    output.mkdir(parents=True,exist_ok=False)
-    start=time.monotonic()
-    inputs={
-        'raw':ROOT/'data/merged/station_hourly_merged.csv',
-        'episodes':ROOT/'data/labels/episode_labels.csv',
-        'statistical':ROOT/'data/labels/statistical_anomaly_review.csv',
-        'tensor':ROOT/'data/hourly_detection/one_hour_final/hourly_detection_01h.npz',
-        'splits':ROOT/'data/hourly_detection/hourly_baseline_split_manifest.csv',
-        'references':ROOT/'data/features/external_residuals.parquet',
-    }
-    before={k:sha(p) for k,p in inputs.items()}
-    raw=pd.read_csv(inputs['raw']);raw.hour_utc=pd.to_datetime(raw.hour_utc,utc=True)
-    refs=pd.read_parquet(inputs['references'],columns=['station_id','time_utc','r_pressure','r_temp','r_dewpoint','r_wind','r_solar'])
-    refs=refs.rename(columns={'time_utc':'hour_utc',**{f'r_{k}':f'reference__{v}__{k}' for k,v in
-        {'pressure':'barometer','temp':'thermo_hygrometer','dewpoint':'thermo_hygrometer','wind':'anemometer','solar':'light_uv'}.items()}})
-    refs.hour_utc=pd.to_datetime(refs.hour_utc,utc=True)
-    raw=raw.merge(refs,on=['station_id','hour_utc'],how='left',validate='one_to_one')
-    frames=[]; evidence={};checks=[]
-    for station,g in raw.groupby('station_id',sort=True):
-        g=g.set_index('hour_utc'); ff,ev=features_for_station(g)
-        cut=ff.index[int(len(ff)*.8)]
-        truncated,_=features_for_station(g.loc[g.index<=cut])
-        common=truncated.index.intersection(ff.index)
-        pd.testing.assert_frame_equal(ff.loc[common],truncated.loc[common],check_exact=False,rtol=1e-5,atol=1e-6)
-        checks.append({'station_id':station,'cutoff':str(cut),'prefix_invariant':True})
-        ff['station_id']=station;ff['hour']=ff.index;frames.append(ff.set_index(['station_id','hour']))
-        evidence[station]=ev
-    features=pd.concat(frames).sort_index();names=features.columns.tolist()
-    print(f'causal_features={len(names)} stations={len(checks)} prefix_checks_passed',flush=True)
-    z=load_hourly_tensor(inputs['tensor'])
-    index=pd.MultiIndex.from_arrays([z['station_id'],pd.to_datetime(z['hour'],utc=True)],names=['station_id','hour'])
-    x=features.reindex(index).to_numpy('float32')
-    ep=pd.read_csv(inputs['episodes']);ep.start_hour=pd.to_datetime(ep.start_hour,utc=True);ep.end_hour=pd.to_datetime(ep.end_hour,utc=True)
-    stat=pd.read_csv(inputs['statistical']);stat.hour_utc=pd.to_datetime(stat.hour_utc,utc=True)
-    y=aligned_labels(raw,evidence,ep,stat,index)
-    fault=np.asarray(z['y_binary'],int)
-    assert not y[fault==0].any()
-    groups=np.array([f'normal:{s}:{str(t)[:10]}' for s,t in index],dtype=object)
-    for k,ii in _fault_groups(fault,z['source_episode_ids']).items():groups[ii]='event:'+k
-    splits={'random':load_reason_code_manifest_splits(z,inputs['splits'])['random'],
-            'grouped':group_balanced_split(groups,y,fault),
-            'chronological':chronological_split(index.get_level_values('hour'),groups)}
-    memberships=[];support=[];split_audit=[]
-    for scheme,sp in splits.items():
-        for part,ii in sp.items():
-            memberships.append(pd.DataFrame({'scheme':scheme,'partition':part,'row_index':ii,'group':groups[ii]}))
-            support.append(dict(scheme=scheme,partition=part,hours=len(ii),fault_hours=int(fault[ii].sum()),
-                resolved_fault_hours=int(y[ii].any(axis=1).sum()),
-                unresolved_fault_hours=int(((fault[ii]==1)&~y[ii].any(axis=1)).sum()),
-                first=str(index[ii].get_level_values('hour').min()),last=str(index[ii].get_level_values('hour').max())))
-            for j,label in enumerate(MECH+COMP):
-                split_audit.append(dict(scheme=scheme,partition=part,label=label,
-                    positive_hours=int(y[ii,j].sum()),positive_events=len(np.unique(groups[ii[y[ii,j]==1]])),
-                    positive_stations=len(np.unique(z['station_id'][ii[y[ii,j]==1]]))))
-        train_groups=set(groups[sp['train']]);overlap=len(train_groups&set(groups[sp['test']]))
-        if scheme!='random':assert overlap==0
-        print(f'{scheme} train/test_group_overlap={overlap}',flush=True)
-    pd.concat(memberships).to_csv(output/'split_membership.csv',index=False)
-    pd.DataFrame(support).to_csv(output/'population.csv',index=False)
-    pd.DataFrame(split_audit).to_csv(output/'label_support.csv',index=False)
-    print(pd.DataFrame(support).to_string(index=False),flush=True)
-    reference=pd.DataFrame(y,columns=MECH+COMP);reference.insert(0,'hour',index.get_level_values('hour'));reference.insert(0,'station_id',z['station_id']);reference['original_fault']=fault
-    reference.to_parquet(output/'aligned_reference.parquet',index=False)
-    feature_spec={axis:{label:[ [names[c] for c in view] for view in feature_views(names,axis,label)]
-        for label in (MECH if axis=='mechanism' else COMP)} for axis in ('mechanism','component')}
-    (output/'feature_spec.json').write_text(json.dumps(feature_spec,indent=2))
-    rows=[];summaries=[];selection=[];ledgers=[];model_dir=output/'models';model_dir.mkdir()
-    with threadpool_limits(limits=2):
-        for scheme,sp in splits.items():
-            train=sp['train'];val=sp['validation'];test=sp['test']
-            # Baseline detector trained in this experiment for a coherent cascade.
-            # It is not substituted for the frozen operational EF-HGB.
-            gatecols=np.array([j for j,n in enumerate(names) if '::summary::' in n or '::context::' in n])
-            gate=fit_estimator(x[train][:,gatecols],fault[train],groups[train])
-            vp=probability(gate,x[val][:,gatecols]);gp=probability(gate,x[test][:,gatecols])
-            gm,gt,_=select_policy(fault[val],np.repeat(vp[:,None],3,axis=1),event_weights(groups[val]),np.zeros(len(val),int))
-            gatepred=gp>=gt
-            from src.model.hourly_baseline import binary_metrics
-            gate_metric=binary_metrics(fault[test],gp,gt)
-            (output/f'gate_{scheme}.json').write_text(json.dumps(dict(threshold=gt,**gate_metric),indent=2))
-            joblib.dump(dict(model=gate,columns=gatecols,threshold=gt,feature_names=names),model_dir/f'gate_{scheme}.joblib')
-            for axis,labels,offset in [('mechanism',MECH,0),('component',COMP,len(MECH))]:
-                yy=y[:,offset:offset+len(labels)]
-                resolved=yy.any(axis=1)
-                # Include non-fault negatives; unresolved fault hours have unknown codes.
-                train_allowed=train[(fault[train]==0)|resolved[train]]
-                rng=np.random.default_rng(SEED)
-                positive=train_allowed[fault[train_allowed]==1]
-                negative=train_allowed[fault[train_allowed]==0]
-                if len(negative)>16000:negative=np.sort(rng.choice(negative,16000,replace=False))
-                fitrows=np.sort(np.r_[positive,negative])
-                preds=np.zeros((len(test),len(labels)),bool);probs=np.zeros_like(preds,dtype=float)
-                available=np.zeros(len(labels),bool)
-                for j,label in enumerate(labels):
-                    target=yy[:,j];views=feature_views(names,axis,label)
-                    support_events=len(np.unique(groups[fitrows[target[fitrows]==1]]))
-                    available[j]=support_events>=3
-                    if not available[j]:
-                        selection.append(dict(scheme=scheme,axis=axis,label=label,status='insufficient_training_events',events=support_events))
-                        continue
-                    oof=np.zeros((len(fitrows),3));foldids=np.zeros(len(fitrows),int)
-                    for fold,(fi,oi) in enumerate(GroupKFold(3).split(fitrows,groups=groups[fitrows])):
-                        foldids[oi]=fold
-                        for branch,cols in enumerate(views):
-                            m=fit_estimator(x[fitrows[fi]][:,cols],target[fitrows[fi]],groups[fitrows[fi]])
-                            oof[oi,branch]=probability(m,x[fitrows[oi]][:,cols])
-                    mix,threshold,cvf1=select_policy(target[fitrows],oof,event_weights(groups[fitrows]),foldids)
-                    models=[];pv=[];pt=[]
-                    for branch,cols in enumerate(views):
-                        m=fit_estimator(x[fitrows][:,cols],target[fitrows],groups[fitrows]);models.append(m)
-                        pt.append(probability(m,x[test][:,cols]));pv.append(probability(m,x[val][:,cols]))
-                    probs[:,j]=np.array(pt).T@mix;preds[:,j]=probs[:,j]>=threshold
-                    vv=np.array(pv).T@mix
-                    valid=(fault[val]==0)|resolved[val]
-                    vm=binary_metrics(target[val[valid]],vv[valid],threshold)
-                    selection.append(dict(scheme=scheme,axis=axis,label=label,status='fitted',events=support_events,
-                        threshold=threshold,full_weight=mix[0],context_weight=mix[1],rules_weight=mix[2],
-                        oof_event_f1=cvf1,validation_f1=vm['f1']))
-                    joblib.dump(dict(models=models,views=views,weights=mix,threshold=threshold,feature_names=names),model_dir/f'{scheme}_{axis}_{label}.joblib')
-                    print(f'{scheme} {axis} {label}: train_events={support_events} OOF_event_F1={cvf1:.3f} validation_F1={vm["f1"]:.3f}',flush=True)
-                for scope in ('resolved_faults','detected_resolved_faults','cascade'):
-                    mask=resolved[test] if scope=='resolved_faults' else ((resolved[test]&gatepred) if scope=='detected_resolved_faults' else ((fault[test]==0)|resolved[test]))
-                    for policy in ('threshold','minimum_one'):
-                        pp=preds.copy()
-                        if policy=='minimum_one':pp=minimum_one(pp,probs,available)
-                        if scope=='cascade':pp &= gatepred[:,None]
-                        if not mask.any():continue
-                        rr,ss=multilabel_rows(yy[test[mask]],pp[mask],groups[test[mask]],labels,
-                            dict(scheme=scheme,axis=axis,scope=scope,policy=policy))
-                        rows.extend(rr);summaries.append(ss)
-                for j,label in enumerate(labels):
-                    ledgers.append(pd.DataFrame(dict(scheme=scheme,axis=axis,label=label,
-                        station_id=z['station_id'][test],hour=z['hour'][test],group=groups[test],
-                        original_fault=fault[test],reference_resolved=resolved[test],target=yy[test,j],
-                        probability=probs[:,j],prediction=preds[:,j],gate_prediction=gatepred)))
-    pd.DataFrame(rows).to_csv(output/'per_label.csv',index=False)
-    pd.DataFrame(summaries).to_csv(output/'summary.csv',index=False)
-    pd.DataFrame(selection).to_csv(output/'selection.csv',index=False)
-    pd.concat(ledgers).to_parquet(output/'predictions.parquet',index=False)
-    assert before=={k:sha(p) for k,p in inputs.items()}
-    audit=dict(input_hashes=before,source_files_unchanged=True,causality_checks=checks,
-        chronological_boundaries=['2026-04-01','2026-05-01'],embargo_days=7,seed=SEED,
-        threads=2,elapsed_seconds=time.monotonic()-start,
-        target='current-hour evidence within accepted reference episodes; calibration retains confirmed interval',
-        statistical_reference='historical contextual adjudication, not independently verified or claimed causal',
-        external_reference='same-hour archived residual values only; rolling statistics rebuilt causally; archive arrival-time availability not verified',
-        calibration_reference='four historical corroborated intervals; live confirmation availability unverified',
-        selection='3-fold training-only grouped OOF, mean event-weighted F1; validation sanity only',
-        cascade='new experimental HGB gate trained on same split; not frozen operational EF-HGB',
-        limitation='New target population: not directly comparable to episode-broadcast scores; unresolved hours excluded from code metrics and reported in population.csv.')
-    (output/'audit.json').write_text(json.dumps(audit,indent=2))
-    print(pd.DataFrame(summaries).to_string(index=False),flush=True)

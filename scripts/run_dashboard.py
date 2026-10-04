@@ -27,7 +27,7 @@ CHART_CONFIG = {"displaylogo": False, "scrollZoom": False,
 
 @st.cache_resource(show_spinner="Loading station observations…")
 def _load(schema_version: str) -> ReplayBundle:
-    # The bundle is read-only. Avoid copying the large saved tables on every tick.
+
     _ = schema_version
     return load_replay_bundle()
 
@@ -123,7 +123,7 @@ def _station_page(bundle: ReplayBundle, snapshot: pd.DataFrame, hour: pd.Timesta
     if "selected_station_id" not in st.session_state:
         st.session_state.selected_station_id = st.session_state.get("station_memory", sorted(labels)[0])
     station_id = st.selectbox("Choose station", sorted(labels), format_func=labels.get, key="selected_station_id")
-    # Widget keys are cleaned up when another view is selected; retain this separately.
+
     st.session_state.station_memory = station_id
     row = snapshot.loc[snapshot.station_id.eq(station_id)].iloc[0]
     metrics = st.columns(4)
@@ -272,7 +272,7 @@ def main() -> None:
     snapshot = build_replay_snapshot(bundle, hour)
     view = st.segmented_control("View", ["Network", "Station", "Evidence"], default="Network",
                                 required=True, key="monitor_view", label_visibility="collapsed")
-    # Only build the selected view: charts/evidence do not run in hidden tabs.
+
     if view == "Station":
         _station_page(bundle, snapshot, hour)
     elif view == "Evidence":

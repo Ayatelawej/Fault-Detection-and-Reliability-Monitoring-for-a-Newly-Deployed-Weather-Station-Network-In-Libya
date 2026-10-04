@@ -1,0 +1,31 @@
+{
+  "version": "final-system-20260924-packaged-20261004-trimmed",
+  "purpose": "Frozen inputs, deployed models and retained comparison prerequisites. No private notes, reports, credentials or environment files.",
+  "include": [
+    "data/merged", "data/external", "data/features", "data/labels",
+    "data/processed", "data/report", "data/staging", "data/hourly_detection",
+    "data/model/final_system_20260924", "data/model/frozen_rule_statistics",
+    "data/model/health_forecast", "data/model/health_forecast_long_horizon",
+    "data/model/reason_codes",
+    "data/eval/blocked_ef_hgb_20260914",
+    "data/eval/blocked_model_comparison_20260916_v2",
+    "data/eval/episode_reason_pilot_20260924",
+    "data/eval/episode_reasons_three_splits_20260924_v2",
+    "data/eval/final_forecast_comparison_20260924",
+    "data/eval/final_reason_comparison_20260924",
+    "data/eval/final_system_release_20260924",
+    "data/eval/forecast_baseline_corrections_20260918",
+    "data/eval/forecast_baseline_corrections_complete_20260919",
+    "data/eval/forecast_baseline_corrections_long_20260919",
+    "data/eval/forecast_baseline_corrections_remaining_20260919",
+    "data/eval/health_forecast", "data/eval/health_forecast_long_horizon",
+    "data/eval/health_forecast_release_20260920",
+    "data/eval/july_2026_adjudicated_labels", "data/eval/july_2026_features",
+    "data/eval/july_2026_health", "data/eval/july_2026_health_forecast",
+    "data/eval/july_2026_reason_codes", "data/eval/july_2026_reason_codes_episode_v2",
+    "data/eval/july_2026_reason_codes_mixed_v2",
+    "data/eval/july_2026_scoring", "data/eval/july_2026_weather_annotations",
+    "data/eval/one_hour_candidate", "data/eval/reason_code_rebuild_20260912_v2",
+    "data/eval/report_linear_forecasts_20260924"
+  ]
+}

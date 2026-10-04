@@ -55,7 +55,7 @@ def health_breakdown(row: pd.Series) -> pd.DataFrame:
 
 
 def forecast_table(row: pd.Series) -> pd.DataFrame:
-    # Leave missing forecasts missing, rather than displaying them as zero.
+
     return pd.DataFrame({
         "Hours ahead": HORIZONS,
         "Health /100": [row[f"forecast_{h}h"] for h in HORIZONS],
@@ -97,7 +97,7 @@ def history_chart(history: pd.DataFrame, station_id: str) -> go.Figure:
     else:
         fig.update_traces(mode="lines+markers")
         if len(valid):
-            # Plotly auto-ranges a lone timestamp in milliseconds. Use hourly context instead.
+
             hour = valid.index[0]
             fig.update_xaxes(range=[hour - pd.Timedelta(hours=1), hour + pd.Timedelta(hours=1)],
                              dtick=3_600_000)

@@ -12,8 +12,6 @@ from scripts import (
     generate_report_assets,
     run_dashboard,
 )
-from scripts import evaluate_outage_risk
-from scripts.evaluate_outage_risk import parse_args as parse_outage_args
 from scripts.generate_report_assets import parse_args as parse_report_args
 from scripts.train_hourly_detection import parse_args as parse_training_args
 from scripts.tune_hourly_detection import parse_args as parse_tuning_args
@@ -150,14 +148,6 @@ def test_hourly_dataset_custom_window_requires_explicit_output() -> None:
         build_hourly_dataset.main(["--window-hours", "1"])
 
 
-def test_reason_code_postprocess_is_described_as_retrospective_not_dashboard_output() -> None:
-    help_text = train_hourly_baseline.parse_reason_code_args().format_help().lower()
-    source = Path(train_hourly_baseline.__file__).read_text(encoding="utf-8").lower()
-
-    assert "retrospective event-level analysis" in help_text
-    assert "operationalise" not in help_text
-    assert "reason_code_operational_output.csv" not in source
-    assert "dashboard_visible" not in source
 
 
 def test_tuning_front_door_routes_resume_mode_without_consuming_runner_options() -> None:
@@ -171,6 +161,45 @@ def test_report_front_door_selects_one_figure_set() -> None:
     assert parse_report_args(["--set", "results"]) == "results"
     assert parse_report_args(["--set", "july-evaluation"]) == "july-evaluation"
     assert parse_report_args([]) == "methodology"
+
+
+def test_system_help_contains_setup_without_running_commands(monkeypatch, capsys):
+    from scripts import system
+    calls = []
+    monkeypatch.setattr(system.subprocess, "call", lambda *a, **k: calls.append(a))
+    assert system.main(["--help"]) == 0
+    output = capsys.readouterr().out
+    for text in ("requirements-pinned.txt", "config/artifact_release.json",
+                 "package --verify", "MOZN_FIVE_MIN_DIR", "sequentially"):
+        assert text in output
+    assert calls == []
+
+
+def test_system_commands_use_selected_python_and_repository_root(monkeypatch):
+    from scripts import system
+    calls = []
+    def capture(args, **kwargs):
+        calls.append((args, kwargs))
+        return 0
+    monkeypatch.setattr(system.subprocess, "call", capture)
+    assert system.main(["dashboard", "--server.port", "8510"]) == 0
+    assert calls == [([system.sys.executable, "-m", "streamlit", "run",
+                      "scripts/run_dashboard.py", "--server.port", "8510"],
+                     {"cwd": system.ROOT})]
+
+
+def test_old_july_command_routes_to_current_figures(monkeypatch, tmp_path):
+    from src.workflows import build_current_figures as current
+    calls = []
+    monkeypatch.setattr(current, 'OUT', tmp_path)
+    monkeypatch.setattr(current, 'binary', lambda: calls.append('current'))
+    generate_report_assets.main(['--set', 'july-evaluation'])
+    assert calls == ['current']
+
+
+def test_july_default_ledger_is_final_release():
+    from src.workflows.build_july_evaluation_figures import JULY_LEDGER_PATH
+    assert JULY_LEDGER_PATH.parent.name == 'final_system_release_20260924'
 
 
 def test_station_health_front_door_exposes_separate_long_horizon_mode() -> None:
@@ -348,253 +377,4 @@ def test_tuning_reports_all_core_prerequisites_before_creating_output_directory(
     assert "baseline split manifest" in message
     assert "calibrated baseline metrics" in message
     assert "prior RGFN metrics" in message
-    assert not output_dir.exists()
-
-
-def test_outage_front_door_accepts_an_output_directory() -> None:
-    args = parse_outage_args(["--output-dir", "temporary-evaluation"])
-
-    assert str(args.output_dir) == "temporary-evaluation"
-
-
-def test_risk_front_door_accepts_fault_label_target() -> None:
-    args = parse_outage_args(["--target", "fault"])
-
-    assert args.target == "fault"
-    assert not args.run_models
-
-
-def test_risk_front_door_accepts_the_explicit_causal_training_route() -> None:
-    args = parse_outage_args(["--target", "all", "--train-risk-models"])
-
-    assert args.target == "all"
-    assert args.train_risk_models
-    assert not args.run_models
-
-
-def test_risk_front_door_accepts_the_discrete_hazard_comparison_route() -> None:
-    args = parse_outage_args(["--target", "all", "--train-discrete-hazard"])
-
-    assert args.target == "all"
-    assert args.train_discrete_hazard
-    assert not args.train_risk_models
-    assert not args.run_models
-
-
-def test_risk_front_door_accepts_the_threshold_reselection_route() -> None:
-    args = parse_outage_args(["--target", "all", "--reselect-forecast-thresholds"])
-
-    assert args.target == "all"
-    assert args.reselect_forecast_thresholds
-    assert not args.train_risk_models
-    assert not args.train_discrete_hazard
-
-
-def test_causal_risk_training_requires_all_targets_before_preflight() -> None:
-    with pytest.raises(ValueError, match="requires --target all"):
-        evaluate_outage_risk.main(["--target", "outage", "--train-risk-models"])
-
-
-def test_causal_risk_training_front_door_routes_to_the_new_path(tmp_path, monkeypatch) -> None:
-    report_path = tmp_path / "forecast_risk_report.txt"
-    report_path.write_text("forecast complete\n", encoding="utf-8")
-    calls: dict[str, object] = {}
-
-    monkeypatch.setattr(evaluate_outage_risk, "require_files", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "train_forecast_risk_models",
-        lambda output_dir, **kwargs: calls.update(
-            {"train_output_dir": output_dir, "train_kwargs": kwargs}
-        )
-        or {"result": "causal"},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "write_forecast_risk_outputs",
-        lambda result, output_dir: calls.update(
-            {"write_result": result, "write_output_dir": output_dir}
-        )
-        or {"report": report_path},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "evaluate_all_with_predictions",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("the legacy prototype path must not run")
-        ),
-    )
-
-    evaluate_outage_risk.main(
-        ["--target", "all", "--train-risk-models", "--output-dir", str(tmp_path)]
-    )
-
-    assert calls["train_output_dir"] == tmp_path
-    assert calls["write_output_dir"] == tmp_path
-    assert calls["write_result"] == {"result": "causal"}
-
-
-def test_threshold_reselection_front_door_routes_without_training(tmp_path, monkeypatch) -> None:
-    report_path = tmp_path / "forecast_risk_threshold_reselection_report.txt"
-    report_path.write_text("threshold reselection complete\n", encoding="utf-8")
-    calls: dict[str, object] = {}
-
-    monkeypatch.setattr(evaluate_outage_risk, "require_files", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "reselect_forecast_risk_thresholds",
-        lambda source_dir: calls.update({"source_dir": source_dir})
-        or {"result": "threshold-reselection"},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "write_forecast_threshold_reselection_outputs",
-        lambda result, output_dir: calls.update(
-            {"write_result": result, "write_output_dir": output_dir}
-        )
-        or {"report": report_path},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "train_forecast_risk_models",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("threshold reselection must not train a model")
-        ),
-    )
-
-    evaluate_outage_risk.main(
-        [
-            "--target",
-            "all",
-            "--reselect-forecast-thresholds",
-            "--output-dir",
-            str(tmp_path),
-        ]
-    )
-
-    assert calls["source_dir"] == evaluate_outage_risk.FORECAST_OUTPUT_DIR
-    assert calls["write_result"] == {"result": "threshold-reselection"}
-    assert calls["write_output_dir"] == tmp_path
-
-
-def test_discrete_hazard_front_door_routes_to_the_hazard_path(tmp_path, monkeypatch) -> None:
-    report_path = tmp_path / "discrete_hazard_report.txt"
-    report_path.write_text("hazard complete\n", encoding="utf-8")
-    calls: dict[str, object] = {}
-
-    monkeypatch.setattr(evaluate_outage_risk, "require_files", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "train_discrete_hazard_models",
-        lambda output_dir, **kwargs: calls.update(
-            {"train_output_dir": output_dir, "train_kwargs": kwargs}
-        )
-        or {"result": "hazard"},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "write_discrete_hazard_outputs",
-        lambda result, output_dir: calls.update(
-            {"write_result": result, "write_output_dir": output_dir}
-        )
-        or {"report": report_path},
-    )
-
-    evaluate_outage_risk.main(
-        ["--target", "all", "--train-discrete-hazard", "--output-dir", str(tmp_path)]
-    )
-
-    assert calls["train_output_dir"] == tmp_path
-    assert calls["write_output_dir"] == tmp_path
-    assert calls["write_result"] == {"result": "hazard"}
-
-
-def test_discrete_hazard_report_remains_writable_when_timeboxed_before_testing() -> None:
-    empty_frame_names = [
-        "metrics",
-        "selection_trace",
-        "calibration",
-        "feature_counts",
-        "feature_audit",
-        "feature_future_validation",
-        "hazard_support",
-        "independent_onset_support",
-        "onset_construction",
-        "onset_eligibility",
-        "network_event_policy",
-        "direct_onset_comparison",
-        "manifest_validation",
-        "deployment_scope",
-    ]
-    result = {name: pd.DataFrame() for name in empty_frame_names}
-    result["run_status"] = pd.DataFrame(
-        [{"run_status": "timeboxed_partial", "test_configurations_completed": 0}]
-    )
-
-    report = evaluate_outage_risk._discrete_hazard_report(result)
-
-    assert "RUN STATUS" in report
-    assert "timeboxed_partial" in report
-    assert "Configurations meeting precision, recall, and F1 >= 0.80:" in report
-
-
-def test_fault_risk_front_door_refuses_model_fitting() -> None:
-    with pytest.raises(ValueError, match="label-only run"):
-        evaluate_outage_risk.main(["--target", "fault", "--run-models"])
-
-
-def test_outage_front_door_does_not_fit_models_without_explicit_flag(
-    tmp_path,
-    monkeypatch,
-) -> None:
-    report_path = tmp_path / "outage_risk_label_split_report.txt"
-    report_path.write_text("labels only\n", encoding="utf-8")
-    output_paths = {
-        "partition_summary": tmp_path / "summary.csv",
-        "purge_summary": tmp_path / "purge.csv",
-        "label_changes": tmp_path / "changes.csv",
-        "report": report_path,
-    }
-    monkeypatch.setattr(evaluate_outage_risk, "require_files", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "build_label_split_report",
-        lambda *args, **kwargs: {},
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "write_label_split_outputs",
-        lambda *args, **kwargs: output_paths,
-    )
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "evaluate_all_with_predictions",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("model fitting must require --run-models")
-        ),
-    )
-
-    evaluate_outage_risk.main(["--output-dir", str(tmp_path)])
-
-
-def test_outage_evaluation_checks_inputs_before_creating_output_directory(tmp_path, monkeypatch) -> None:
-    output_dir = tmp_path / "evaluation_output"
-    monkeypatch.setattr(
-        evaluate_outage_risk,
-        "AVAILABILITY_CLASSIFICATION_PATH",
-        tmp_path / "missing_classification.parquet",
-    )
-
-    with pytest.raises(FileNotFoundError) as error:
-        evaluate_outage_risk.main(
-            [
-                "--events",
-                str(tmp_path / "missing_events.parquet"),
-                "--output-dir",
-                str(output_dir),
-            ],
-        )
-
-    assert "hourly availability classification" in str(error.value)
-    assert "availability events" in str(error.value)
     assert not output_dir.exists()

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from scripts.investigate_july_temperature import guard_masks, thermal_context
+from src.dashboard.weather_context import guard_masks, thermal_context
 
 
 def test_missing_or_conflicting_evidence_keeps_alert():

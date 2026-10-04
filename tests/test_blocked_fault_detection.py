@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from scripts.experiment_blocked_fault_detection import blocked_split, select_threshold, validate_split
+from src.model.evaluation_splits import blocked_split, select_threshold, validate_split
 
 
 def test_reject_group_leakage():

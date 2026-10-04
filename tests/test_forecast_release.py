@@ -38,7 +38,7 @@ def test_old_model_without_baseline_metadata_keeps_roll_forward(monkeypatch):
 
 
 def test_band_metric_boundaries():
-    from scripts.deploy_selected_health_forecasts import bands
+    from src.workflows.prepare_forecast_comparison_inputs import bands
     np.testing.assert_array_equal(bands([0,39.99,40,59.99,60,79.99,80,100]),[0,0,1,1,2,2,3,3])
 
 

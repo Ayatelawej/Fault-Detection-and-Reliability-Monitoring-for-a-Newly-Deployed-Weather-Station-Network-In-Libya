@@ -146,7 +146,7 @@ def test_single_health_reading_has_no_empty_slider_or_millisecond_axis():
     assert not fig.layout.xaxis.rangeselector.visible
     assert fig.layout.xaxis.dtick == 3_600_000
     assert fig.layout.xaxis.range == (hour - pd.Timedelta(hours=1), hour + pd.Timedelta(hours=1))
-    assert len(fig.data[0].x) == 1  # padding the axis must not invent observations
+    assert len(fig.data[0].x) == 1
 
 
 def test_timeline_reserves_room_for_axis_title_and_uses_matching_background():

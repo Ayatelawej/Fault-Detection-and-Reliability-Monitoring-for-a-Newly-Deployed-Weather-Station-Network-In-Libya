@@ -41,8 +41,8 @@ JULY_LEDGER_PATH = (
     PROJECT_ROOT
     / "data"
     / "eval"
-    / "one_hour_candidate"
-    / "july_ef_hgb_binary_predictions.parquet"
+    / "final_system_release_20260924"
+    / "binary_predictions.parquet"
 )
 CLASS_DISTRIBUTION_PATH = FIGURES_DIR / "selected_ef_hgb_class_distribution.png"
 CONFUSION_MATRIX_PATH = FIGURES_DIR / "selected_ef_hgb_confusion_matrices.png"
@@ -101,7 +101,7 @@ def load_selected_detector_evaluations(
     )
     july_ledger = pd.read_parquet(july_ledger_path)
     july = BinaryEvaluation(
-        name="Independent July test",
+        name="July deployed refit",
         truth=july_ledger["truth_fault"].to_numpy(dtype=int),
         probability=july_ledger["random_probability"].to_numpy(dtype=float),
         prediction=july_ledger["random_prediction"].to_numpy(dtype=int),
@@ -217,21 +217,10 @@ def build_roc_pr_figure(
 
 
 def main() -> None:
-    evaluations = load_selected_detector_evaluations()
-    build_class_distribution_figure(evaluations, CLASS_DISTRIBUTION_PATH)
-    build_confusion_matrix_figure(evaluations, CONFUSION_MATRIX_PATH)
-    build_roc_pr_figure(evaluations, ROC_PR_PATH)
-    for evaluation in evaluations:
-        matrix = confusion_matrix(evaluation.truth, evaluation.prediction).ravel().tolist()
-        print(
-            f"{evaluation.name}: rows={len(evaluation.truth)} fault={int(evaluation.truth.sum())} "
-            f"not_fault={int((1 - evaluation.truth).sum())} tn_fp_fn_tp={matrix} "
-            f"auroc={roc_auc_score(evaluation.truth, evaluation.probability):.6f} "
-            f"auprc={average_precision_score(evaluation.truth, evaluation.probability):.6f}"
-        )
-    print(f"class_distribution={CLASS_DISTRIBUTION_PATH}")
-    print(f"confusion_matrices={CONFUSION_MATRIX_PATH}")
-    print(f"roc_pr_curves={ROC_PR_PATH}")
+
+    from src.workflows.build_current_figures import binary, OUT
+    OUT.mkdir(parents=True, exist_ok=True)
+    binary()
 
 
 if __name__ == "__main__":

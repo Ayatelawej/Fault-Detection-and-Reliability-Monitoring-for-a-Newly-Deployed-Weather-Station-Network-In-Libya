@@ -1,0 +1,10 @@
+{
+  "purpose": "Frozen score-neutral July annotation inputs, extracted without changing values or row order.",
+  "path": "data/features/july_weather_context.parquet",
+  "sha256": "a8d4f3c12c8d06d2f350b5fbbdec2994724db4b81c5a18a29c7f06ea970da0e2",
+  "rows": 13565,
+  "source_in_external_snapshot": "data/eval/july_temperature_investigation/july_shadow_predictions.parquet",
+  "source_sha256": "e2f1f095a0725d704d4790bafecc31077a6b728ab92003eeeef3bd9e0ef819ab",
+  "implementation": "src/dashboard/weather_context.py",
+  "effect": "Annotations only; never changes binary decisions or model scores."
+}

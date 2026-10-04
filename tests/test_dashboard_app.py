@@ -18,7 +18,7 @@ def _require_local_replay_inputs(paths):
     if missing:
         pytest.skip(
             "Optional frozen July replay artifacts are missing; restore them as described "
-            "in docs/RELEASE_CHECKLIST.md: " + ", ".join(missing)
+            "in config/artifact_release.json: " + ", ".join(missing)
         )
 
 
@@ -34,8 +34,8 @@ def test_present_local_replay_input_does_not_skip(tmp_path):
 
 
 def test_dashboard_starts_and_renders_mid_july_hour_400():
-    # Only ignored release inputs are optional; missing tracked files, bad schemas,
-    # gate mismatches, and application errors must still fail when inputs exist.
+
+
     _require_local_replay_inputs(
         [
             JULY_HEALTH_PATH,

@@ -1,4 +1,3 @@
-/* Reserve space for Streamlit's fixed toolbar, including at narrow widths. */
 .stMainBlockContainer { max-width: 1500px; padding-top: 6rem; padding-bottom: 3rem; }
 [data-testid="stSidebar"] { border-right: 1px solid #dbe3ec; }
 h1, h2, h3 { color: #20364d; letter-spacing: -.025em; }

@@ -28,7 +28,7 @@ def test_future_spike_does_not_label_earlier_episode_hours():
 
 def test_stuck_confirmation_and_features_do_not_look_forward():
     raw=station_frame();full,ev=features_for_station(raw)
-    assert not ev['winddir_avg_deg']['stuck_flatline'].any()  # speed stuck too
+    assert not ev['winddir_avg_deg']['stuck_flatline'].any()
     assert not ev['windspeed_avg_kmh']['stuck_flatline'].iloc[:23].any()
     assert ev['windspeed_avg_kmh']['stuck_flatline'].iloc[23]
     short,_=features_for_station(raw.iloc[:130])

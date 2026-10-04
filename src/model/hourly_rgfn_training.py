@@ -930,9 +930,9 @@ def _fit_reason_code_rgfn_split(
             validation_probabilities[:, index],
             threshold,
         )
-        # This value is diagnostic only: deployed thresholds come from the
-        # grouped training OOF procedure above. A blocked validation period may
-        # legitimately have no positives for a rare reason code.
+
+
+
         (
             reference_threshold,
             reference_metrics,

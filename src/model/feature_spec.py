@@ -94,10 +94,10 @@ TARGET_COLUMNS = [
     "family",
 ]
 
-# Frozen from the normalized fault-instance inventory using the project rule
-# of at least 10 instances per reportable label. These axes are independent:
-# a fault can have a supported component even when its mechanism is out of
-# scope, and vice versa.
+
+
+
+
 MECHANISM_LABEL_NAMES = (
     "spike_impossible",
     "stuck_flatline",

@@ -1,5 +1,5 @@
 import numpy as np
-from scripts.experiment_blocked_reason_codes import training_rows
+from src.model.reason_sampling import training_rows
 from src.model.final_reason_codes import apply_output_policy
 
 
