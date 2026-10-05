@@ -85,7 +85,7 @@ def isolated_output_paths(output_dir: Path) -> dict[str, Path]:
     return paths
 
 
-def resolve_rebuild_outputs(merged_path: Path, output_dir: Path | None) -> dict[str, Path]:
+def resolve_feature_outputs(merged_path: Path, output_dir: Path | None) -> dict[str, Path]:
     merged = Path(merged_path).resolve()
     canonical = Path(MERGED_DATASET_PATH).resolve()
     if output_dir is None:
@@ -122,7 +122,7 @@ def _measurement_channels(merged: pd.DataFrame) -> list[str]:
     ]
 
 
-def _require_rebuild_inputs(
+def _require_feature_inputs(
     merged_path: Path,
     registry_path: Path,
     reference_dir: Path,
@@ -152,7 +152,7 @@ def _require_rebuild_inputs(
     )
 
 
-def rebuild_detection_features(
+def build_detection_features(
     *,
     merged_path: Path = MERGED_DATASET_PATH,
     registry_path: Path = STATION_REGISTRY_PATH,
@@ -161,8 +161,8 @@ def rebuild_detection_features(
     output_dir: Path | None = None,
     frozen_statistics: FrozenRuleStatistics | None = None,
 ) -> dict[str, int]:
-    paths = resolve_rebuild_outputs(Path(merged_path), output_dir)
-    _require_rebuild_inputs(
+    paths = resolve_feature_outputs(Path(merged_path), output_dir)
+    _require_feature_inputs(
         Path(merged_path),
         Path(registry_path),
         Path(reference_dir),

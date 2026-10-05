@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> None:
             "feature matrix": args.features,
             "live episode labels": args.labels,
         },
-        "Run scripts/rebuild_detection_features.py and scripts/build_labels.py first.",
+        "Run scripts/build_detection_features.py and scripts/build_labels.py first.",
     )
     hourly = load_hourly_frame(args.source, args.features)
     episodes = load_labelled_episodes(args.labels)

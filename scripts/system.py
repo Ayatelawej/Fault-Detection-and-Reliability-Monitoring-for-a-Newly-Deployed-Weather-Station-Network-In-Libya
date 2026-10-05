@@ -8,7 +8,7 @@ COMMANDS = {
     "package": ["scripts/package_reproduction.py"],
     "availability": ["scripts/build_reliability_foundations.py"],
     "labels": ["scripts/build_labels.py"],
-    "features": ["scripts/rebuild_detection_features.py"],
+    "features": ["scripts/build_detection_features.py"],
     "dataset": ["scripts/build_hourly_dataset.py"],
     "binary": ["scripts/train_hourly_detection.py"],
     "binary-temporal": ["-m", "src.workflows.compare_binary_temporal"],

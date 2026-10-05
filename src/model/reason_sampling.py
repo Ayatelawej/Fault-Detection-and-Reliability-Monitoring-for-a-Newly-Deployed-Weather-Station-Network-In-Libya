@@ -1,6 +1,6 @@
 """Select labelled training faults plus a reproducible sample of normal hours."""
 import numpy as np
-from src.model.reason_code_rebuild import SEED
+from src.model.reason_code_utils import SEED
 
 def training_rows(train, fault, resolved, limit=16000):
     positive = train[(fault[train] == 1) & resolved[train]]

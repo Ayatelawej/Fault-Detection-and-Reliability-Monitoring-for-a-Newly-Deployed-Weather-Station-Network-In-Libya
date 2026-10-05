@@ -10,7 +10,7 @@ import joblib
 from sklearn.base import clone
 from threadpoolctl import threadpool_limits
 from src.model.hourly_baseline import load_hourly_tensor,flatten_hourly_features,EvidenceFusedHgbClassifier,binary_metrics,_fault_groups
-from src.model.reason_code_rebuild import MECH,COMP,fit_estimator,sha
+from src.model.reason_code_utils import MECH,COMP,fit_estimator,sha
 from src.model.final_reason_codes import FREEZE,load_observations,build_features,JULY_RAW,JULY_REFS
 from src.model.reason_rgfn_adapter import ReasonRgfnEstimator
 from src.workflows.compare_reasons import balanced
@@ -122,7 +122,7 @@ def forecasts():
 
 def evaluate_reasons():
     from src.model.final_reason_codes import predict
-    from src.model.reason_code_rebuild import multilabel_rows
+    from src.model.reason_code_utils import multilabel_rows
     gate=pd.read_parquet(OUT/'binary_predictions.parquet')
     bundle=joblib.load(MODELS/'reasons/reason_heads.joblib')
     features,_=build_features(load_observations(JULY_RAW,JULY_REFS,gate.hour_utc.max()))

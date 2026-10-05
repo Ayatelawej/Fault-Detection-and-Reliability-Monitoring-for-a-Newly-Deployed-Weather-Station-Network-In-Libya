@@ -305,7 +305,7 @@ def _require_label_inputs(source: Path) -> None:
             "external residual evidence": EXTERNAL_RESIDUALS_PATH,
             "spatial residual evidence": SPATIAL_RESIDUALS_PATH,
         },
-        "Run scripts/rebuild_detection_features.py after supplying its public reference and observation inputs.",
+        "Run scripts/build_detection_features.py after supplying its public reference and observation inputs.",
     )
 
 

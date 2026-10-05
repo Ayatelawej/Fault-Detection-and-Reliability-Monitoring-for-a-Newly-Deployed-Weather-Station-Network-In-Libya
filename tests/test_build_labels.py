@@ -49,7 +49,7 @@ def test_label_inputs_fail_before_the_label_build_when_evidence_is_missing(tmp_p
     message = str(error.value)
     assert "external residual evidence" in message
     assert "spatial residual evidence" in message
-    assert "rebuild_detection_features.py" in message
+    assert "build_detection_features.py" in message
 
 
 def test_parse_args_defaults_match_canonical_paths() -> None:

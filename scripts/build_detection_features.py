@@ -7,11 +7,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.features.rebuild import (
+from src.features.detection_features import (
     DEFAULT_FIVE_MIN_DIR,
     DEFAULT_REFERENCE_DIR,
-    rebuild_detection_features,
-    resolve_rebuild_outputs,
+    build_detection_features,
+    resolve_feature_outputs,
 )
 from src.config.paths import MERGED_DATASET_PATH, STATION_REGISTRY_PATH
 from src.rules.frozen_statistics import load_frozen_rule_statistics
@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    outputs = resolve_rebuild_outputs(args.merged, args.output_dir)
+    outputs = resolve_feature_outputs(args.merged, args.output_dir)
     print("OUTPUT MAP")
     for name, path in outputs.items():
         print(f"{name}={path}")
@@ -39,7 +39,7 @@ def main() -> None:
         if args.frozen_statistics_dir is not None
         else None
     )
-    rows = rebuild_detection_features(
+    rows = build_detection_features(
         merged_path=args.merged,
         registry_path=args.registry,
         reference_dir=args.reference_dir,
@@ -47,7 +47,7 @@ def main() -> None:
         output_dir=args.output_dir,
         frozen_statistics=frozen_statistics,
     )
-    print("DETECTION FEATURES REBUILT")
+    print("DETECTION FEATURES BUILT")
     for name, value in rows.items():
         print(f"{name}={value}")
 

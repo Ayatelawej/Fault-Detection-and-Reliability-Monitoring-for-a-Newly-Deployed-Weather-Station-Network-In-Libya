@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.features.rebuild import (
+from src.features.detection_features import (
     DEFAULT_OUTPUTS,
     isolated_output_paths,
-    rebuild_detection_features,
+    build_detection_features,
 )
 
 
@@ -17,7 +17,7 @@ def test_rebuild_requires_reference_inputs_before_writing_outputs(tmp_path) -> N
     registry_path.write_text("station_id\n", encoding="utf-8")
 
     with pytest.raises(FileNotFoundError, match="public reference parquet"):
-        rebuild_detection_features(
+        build_detection_features(
             merged_path=merged_path,
             registry_path=registry_path,
             reference_dir=tmp_path / "missing_reference",
@@ -32,7 +32,7 @@ def test_noncanonical_rebuild_requires_output_directory_before_input_checks(tmp_
     merged_path = tmp_path / "combined.csv"
 
     with pytest.raises(ValueError, match="requires --output-dir"):
-        rebuild_detection_features(merged_path=merged_path)
+        build_detection_features(merged_path=merged_path)
 
     assert not list(tmp_path.rglob("*"))
 
