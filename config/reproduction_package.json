@@ -1,6 +1,6 @@
 {
-  "version": "final-system-20260924-packaged-20261004-trimmed",
-  "purpose": "Frozen inputs, deployed models and retained comparison prerequisites. No private notes, reports, credentials or environment files.",
+  "version": "final-system-20260924-active-20261005",
+  "purpose": "Active inputs, deployed models, selected refit templates and compact comparison results. Non-deployed search checkpoints are archived separately; restoring them is required to resume those historical runs. The published 20261004 ZIP remains a compatible larger snapshot. No private notes, reports, credentials or environment files.",
   "include": [
     "data/merged", "data/external", "data/features", "data/labels",
     "data/processed", "data/report", "data/staging", "data/hourly_detection",

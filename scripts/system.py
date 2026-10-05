@@ -56,6 +56,9 @@ Reproduction notes:
   needs the separate Mozn source folder, set through MOZN_FIVE_MIN_DIR.
   Training/release commands can be expensive and may refuse existing outputs.
   Rerun them in a separate reproduction copy, preserving the frozen originals.
+  Non-deployed search checkpoints are archived outside the active checkout.
+  Restore them from the companion snapshot before resuming historical tuning
+  or loading unselected experiment models. Final refit templates remain present.
   To create a new companion ZIP outside the repository:
     .venv\Scripts\python scripts/system.py package --output C:\path\new-artifacts.zip
 """
